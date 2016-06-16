@@ -4,6 +4,8 @@
 
 Tenaya is a Cascading workflow that processes [FASTQ](https://en.wikipedia.org/wiki/FASTQ_format) files from the Sequence Read Archive ([SRA](http://www.ncbi.nlm.nih.gov/sra)).
 
+[Ryan Brott](https://github.com/rbrott) is working on the project, and documenting his [progress](https://github.com/ScaleUnlimited/tenaya/wiki/Activity-Log) and [notes](https://github.com/ScaleUnlimited/tenaya/wiki/Notes) in this project's [Wiki pages](https://github.com/ScaleUnlimited/tenaya/wiki).
+
 ## Details
 
 For each [individual accession sample](http://www.ncbi.nlm.nih.gov/books/NBK47533/), the processing consists of:
