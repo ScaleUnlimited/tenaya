@@ -1,18 +1,20 @@
 package com.scaleunlimited.tenaya.data;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import static org.junit.Assert.*;
+
 import java.util.Random;
+
+import org.junit.Test;
 
 import com.scaleunlimited.tenaya.data.MurmurHash3.LongPair;
 
 public class CountMinSketchTest {
 
-	public static void main(String[] args) {
-		double acceptableErrorDiff = 0.2;
-		int rows = 4;
-		int width = 10000000;
+	@Test
+	public void testSketch() {
+		double acceptableErrorDiff = 0.3;
+		int rows = 6;
+		int width = 40000000;
 		int unique = 30000000;
 		int range = 100;
 		int[][] counts = new int[unique][2];
@@ -46,10 +48,7 @@ public class CountMinSketchTest {
 		double actualErrorRate = ((double) errors) / ((double) unique);
 		double estimatedErrorRate = sketch.falsePositiveRate();
 		double errorDiff = (estimatedErrorRate - actualErrorRate) / actualErrorRate;
-		System.out.println("estimated: " + estimatedErrorRate);
-		System.out.println("actual: " + actualErrorRate);
-		System.out.println("percent diff: " + errorDiff);
-		System.out.println(Math.abs(errorDiff) <= acceptableErrorDiff ? "SUCCESS" : "FAILURE");
+		assertTrue("", Math.abs(errorDiff) <= acceptableErrorDiff);
 	}
 	
 	private static long[] hash(long value, int[] seeds) {

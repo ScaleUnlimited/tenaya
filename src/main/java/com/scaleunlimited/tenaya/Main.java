@@ -22,10 +22,8 @@ public class Main {
 	}
 	
 	public static void testSketch(String sourceFile, String destFile) throws IOException {
-//		Path filePath = FileSystems.getDefault().getPath("fastq/sfg_samples/1_Cold_TESTFILE.fastq");
-//		File file = filePath.toFile();
-		File file = new File("/Users/kenkrugler/Downloads/abyssicola.fastq");
-		File dump = new File("/Users/kenkrugler/Downloads/abyssicola.dump");
+		File file = new File(sourceFile);
+		File dump = new File(destFile);
 		SampleReader reader = new SampleReader(file, FileFormat.FASTQ);
 		KmerGenerator generator = new KmerGenerator(20, reader);
 		CountMinSketch sketch = new CountMinSketch(10, 200000000);
