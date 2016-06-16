@@ -48,5 +48,11 @@ public class KmerGenerator implements Iterator<String> {
 		currentIndex = 0;
 		len = currentSequence.length();
 	}
+
+	@Override
+	public void remove() {
+		throw new UnsupportedOperationException("KmerGenerator doesn't support remove");
+		
+	}
 	
 }
