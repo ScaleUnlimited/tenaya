@@ -1,6 +1,7 @@
 package com.scaleunlimited.tenaya;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import com.scaleunlimited.tenaya.data.SampleReader.FileFormat;
@@ -11,14 +12,20 @@ import com.scaleunlimited.tenaya.data.SampleReader;
 public class Main {
 
 	public static void main(String[] args) {
-		testSketch();
+		try {
+			testSketch(args[0], args[1]);
+		} catch (Throwable t) {
+			System.err.println("Tool failed: " + t.getMessage());
+			t.printStackTrace();
+			System.exit(-1);
+		}
 	}
 	
-	public static void testSketch() {
+	public static void testSketch(String sourceFile, String destFile) throws IOException {
 //		Path filePath = FileSystems.getDefault().getPath("fastq/sfg_samples/1_Cold_TESTFILE.fastq");
 //		File file = filePath.toFile();
-		File file = new File("C:/Users/Ryan/Desktop/Drop/abyssicola.fastq");
-		File dump = new File("C:/Users/Ryan/Desktop/Drop/dump");
+		File file = new File("/Users/kenkrugler/Downloads/abyssicola.fastq");
+		File dump = new File("/Users/kenkrugler/Downloads/abyssicola.dump");
 		SampleReader reader = new SampleReader(file, FileFormat.FASTQ);
 		KmerGenerator generator = new KmerGenerator(20, reader);
 		CountMinSketch sketch = new CountMinSketch(10, 200000000);
@@ -33,6 +40,7 @@ public class Main {
 			sketch.addKmer(kmer);
 			i++;
 		}
+		
 		System.out.println("occupancy: " + sketch.getOccupancy());
 		System.out.println("fp rate: " + sketch.falsePositiveRate());
 		sketch.dump(dump);

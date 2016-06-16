@@ -1,7 +1,6 @@
 package com.scaleunlimited.tenaya.data;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -39,7 +38,7 @@ public class CountMinSketch {
 	}
 	
 	private int getIndex(long hash) {
-		return (int) (hash & 0xfffffff) % cols;
+		return (int) (hash & 0x07fffffffL) % cols;
 	}
 	
 	public void addKmer(String kmer) {
@@ -83,22 +82,12 @@ public class CountMinSketch {
 		return occupants;
 	}
 	
-	public void dump(File file) {
-		FileOutputStream outputStream;
-		try {
-			outputStream = new FileOutputStream(file);
-			for (int i = 0; i < rows; i++) {
-				outputStream.write(data[i]);
-			}
-			outputStream.close();
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	public void dump(File file) throws IOException {
+		FileOutputStream outputStream = new FileOutputStream(file);
+		for (int i = 0; i < rows; i++) {
+			outputStream.write(data[i]);
 		}
-		
+		outputStream.close();
 	}
 
 }
