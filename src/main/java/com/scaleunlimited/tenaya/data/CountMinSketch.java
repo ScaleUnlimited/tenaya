@@ -76,9 +76,6 @@ public class CountMinSketch {
 	}
 	
 	public double falsePositiveRate() {
-		System.out.println(cols);
-		System.out.println(occupants);
-		System.out.println(rows);
 		return Math.pow(1.0 - Math.pow(1.0 - (1.0 / ((double) cols)), occupants), rows);
 	}
 	

@@ -23,13 +23,15 @@ public class Main {
 		KmerGenerator generator = new KmerGenerator(20, reader);
 		CountMinSketch sketch = new CountMinSketch(10, 200000000);
 		long start = System.nanoTime();
+		int i = 0;
 		while (generator.hasNext()) {
 			int occupancy = sketch.getOccupancy();
 			if (occupancy % 1000000 == 0) {
-				System.out.println(occupancy);
+				System.out.println(occupancy + "\t" + i);
 			}
 			String kmer = generator.next();
 			sketch.addKmer(kmer);
+			i++;
 		}
 		System.out.println("occupancy: " + sketch.getOccupancy());
 		System.out.println("fp rate: " + sketch.falsePositiveRate());
