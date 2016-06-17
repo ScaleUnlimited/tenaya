@@ -2,15 +2,17 @@ package com.scaleunlimited.tenaya.data;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
-
-import com.scaleunlimited.tenaya.data.MurmurHash3.LongPair;
+import java.io.PrintWriter;
+import java.util.HashMap;
 
 public class CountMinSketch {
 	
 	private byte[][] data;
 	private int rows, cols;
 	private int occupants;
+	private long[] lastHashes;
 	
 	public CountMinSketch(int rows, int cols) {
 		this.rows = rows;
@@ -19,38 +21,24 @@ public class CountMinSketch {
 		this.data = new byte[rows][cols];
 	}
 	
-	public static long[] hashKmer(String kmer, int n) {
-		long rep = Kmer.encode(kmer);
-		byte[] bytes = new byte[8];
-		for (int i = 0; i < 8; i++) {
-			bytes[i] = (byte) (rep & 0x0ffL);
-			rep >>= 8;
-		}
-		int seed = 42;
-		long[] hashes = new long[n];
-		LongPair pair = new LongPair();
-		for (int i = 0; i < n; i++) {
-			MurmurHash3.murmurhash3_x64_128(bytes, 0, bytes.length, seed, pair);
-			hashes[i] = pair.val1;
-			seed = (int) hashes[i];
-		}
-		return hashes;
-	}
-	
 	private int getIndex(long hash) {
 		return (int) (hash & 0x07fffffffL) % cols;
 	}
 	
-	public void addKmer(String kmer) {
-		long[] hashes = hashKmer(kmer, rows);
-		add(hashes);
+	public void addKmer(String kmer, int ksize) {
+		lastHashes = Kmer.hashMurmur(kmer, rows, ksize, lastHashes);
+		add(lastHashes);
 	}
 	
 	public void add(long[] hashes) {
-		if (count(hashes) == 0) occupants++;
+		boolean counted = false;
 		for (int i = 0; i < rows; i++) {
 			int index = getIndex(hashes[i]);
 			byte currentCount = data[i][index];
+			if (currentCount == 0 && !counted) {
+				counted = true;
+				occupants++;
+			}
 			if (currentCount != Byte.MAX_VALUE) {
 				data[i][index] = (byte) (currentCount + 1);
 			}
@@ -69,8 +57,8 @@ public class CountMinSketch {
 		return count;
 	}
 	
-	public int countKmer(String kmer) {
-		long[] hashes = hashKmer(kmer, rows);
+	public int countKmer(String kmer, int ksize) {
+		long[] hashes = Kmer.hashMurmur(kmer, rows, ksize, null);
 		return count(hashes);
 	}
 	
@@ -88,6 +76,19 @@ public class CountMinSketch {
 			outputStream.write(data[i]);
 		}
 		outputStream.close();
+		
+		HashMap<String, String> properties = new HashMap<String, String>();
+		properties.put("Rows", Integer.toString(rows));
+		properties.put("Columns", Integer.toString(cols));
+		properties.put("Occupancy", Integer.toString(occupants));
+		properties.put("FP Rate", Double.toString(falsePositiveRate()));
+		FileWriter infoWriter = new FileWriter(new File(file.toPath().toString() + ".info"));
+		PrintWriter printWriter = new PrintWriter(infoWriter);
+		for (String key : properties.keySet()) {
+			String val = properties.get(key);
+			printWriter.print(key + ":\t" + val);
+		}
+		printWriter.close();
 	}
 
 }

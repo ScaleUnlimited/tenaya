@@ -4,10 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import com.scaleunlimited.tenaya.data.SampleReader.FileFormat;
+import com.scaleunlimited.tenaya.data.FileSampleReader.FileFormat;
 import com.scaleunlimited.tenaya.data.CountMinSketch;
 import com.scaleunlimited.tenaya.data.KmerGenerator;
-import com.scaleunlimited.tenaya.data.SampleReader;
+import com.scaleunlimited.tenaya.data.FileSampleReader;
 
 public class Main {
 
@@ -24,18 +24,19 @@ public class Main {
 	public static void testSketch(String sourceFile, String destFile) throws IOException {
 		File file = new File(sourceFile);
 		File dump = new File(destFile);
-		SampleReader reader = new SampleReader(file, FileFormat.FASTQ);
-		KmerGenerator generator = new KmerGenerator(20, reader);
-		CountMinSketch sketch = new CountMinSketch(10, 200000000);
+		int ksize = 20;
+		FileSampleReader reader = new FileSampleReader(file, FileFormat.FASTQ);
+		KmerGenerator generator = new KmerGenerator(ksize, reader);
+		CountMinSketch sketch = new CountMinSketch(4, 400000000);
 		long start = System.nanoTime();
-		int i = 0;
+		long i = 0;
 		while (generator.hasNext()) {
 			int occupancy = sketch.getOccupancy();
 			if (occupancy % 1000000 == 0) {
 				System.out.println(occupancy + "\t" + i);
 			}
 			String kmer = generator.next();
-			sketch.addKmer(kmer);
+			sketch.addKmer(kmer, ksize);
 			i++;
 		}
 		

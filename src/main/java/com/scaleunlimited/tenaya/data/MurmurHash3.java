@@ -292,5 +292,35 @@ public final class MurmurHash3 {
     out.val1 = h1;
     out.val2 = h2;
   }
+  
+  public static long hashLong(long k1, int seed) {
+	// The original algorithm does have a 32 bit unsigned seed.
+	    // We have to mask to match the behavior of the unsigned types and prevent sign extension.
+	    long h1 = seed & 0x00000000FFFFFFFFL;
+	    long h2 = seed & 0x00000000FFFFFFFFL;
+
+	    final long c1 = 0x87c37b91114253d5L;
+	    final long c2 = 0x4cf5ad432745937fL;
+
+	    k1 *= c1;
+	    k1  = Long.rotateLeft(k1,31);
+	    k1 *= c2;
+	    h1 ^= k1;
+
+	    //----------
+	    // finalization
+
+	    h1 ^= 8; h2 ^= 8;
+
+	    h1 += h2;
+	    h2 += h1;
+
+	    h1 = fmix64(h1);
+	    h2 = fmix64(h2);
+
+	    h1 += h2;
+	    
+	    return h1;
+  }
 
 }

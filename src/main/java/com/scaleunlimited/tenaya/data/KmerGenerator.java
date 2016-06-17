@@ -20,6 +20,10 @@ public class KmerGenerator implements Iterator<String> {
 		currentIndex = 0;
 		len = currentSequence.length();
 	}
+	
+	public KmerGenerator(int ksize, String[] reads) {
+		
+	}
 
 	@Override
 	public boolean hasNext() {
@@ -40,19 +44,10 @@ public class KmerGenerator implements Iterator<String> {
 		}
 		return kmer;
 	}
-	
-	public void reset() {
-		reader.reset();
-		more = true;
-		currentSequence = reader.readSequence();
-		currentIndex = 0;
-		len = currentSequence.length();
-	}
 
 	@Override
 	public void remove() {
 		throw new UnsupportedOperationException("KmerGenerator doesn't support remove");
-		
 	}
 	
 }
