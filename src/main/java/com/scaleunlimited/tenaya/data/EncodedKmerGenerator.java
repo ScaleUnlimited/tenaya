@@ -2,7 +2,7 @@ package com.scaleunlimited.tenaya.data;
 
 import java.util.Iterator;
 
-public class EncodedKmerGenerator implements Iterator<Long> {
+public class EncodedKmerGenerator {
 
 	private SampleReader reader;
 	private boolean more;
@@ -50,13 +50,11 @@ public class EncodedKmerGenerator implements Iterator<Long> {
 		r >>>= 2;
 	}
 
-	@Override
 	public boolean hasNext() {
 		return more;
 	}
-
-	@Override
-	public Long next() {
+	
+	public long next() {
 		char currentChar = currentSequence.charAt(currentIndex++);
 		shift();
 		updateChar(currentChar);

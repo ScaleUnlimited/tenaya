@@ -46,7 +46,7 @@ public class CountMinSketchTest {
 			}
 		}
 		double actualErrorRate = ((double) errors) / ((double) unique);
-		double estimatedErrorRate = sketch.falsePositiveRate();
+		double estimatedErrorRate = sketch.getErrorRate();
 		double errorDiff = (estimatedErrorRate - actualErrorRate) / actualErrorRate;
 		assertTrue("", Math.abs(errorDiff) <= acceptableErrorDiff);
 	}

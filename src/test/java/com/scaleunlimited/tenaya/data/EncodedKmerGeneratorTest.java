@@ -9,7 +9,6 @@ public class EncodedKmerGeneratorTest {
 	@Test
 	public void testGenerator() {
 		final String testSequence = "ATTACATAACCCAATGATACCCTAGAATGAAGCTTGCCTGCACAGACACAAAACTTTTCCTACCATGAAGCTCTTATGCACATTCTAATTCTACTATTCA";
-		System.out.println(testSequence.length());
 		int ksize = 20;
 		
 		KmerGenerator regularGenerator = new KmerGenerator(ksize, new SimpleSampleReader(new String[]{testSequence}));

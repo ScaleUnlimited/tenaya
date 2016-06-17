@@ -85,14 +85,13 @@ public class Kmer {
 		}
 	}
 
-	public static long[] hashMurmur(String kmer, int n, int ksize, long[] hashes) {
+	public static long[] hashMurmur(long kmer, int n, int ksize, long[] hashes) {
 		if (hashes == null) {
 			hashes = new long[n];
 		}
-		long rep = encode(kmer, ksize);
 		int seed = 42;
 		for (int i = 0; i < n; i++) {
-			hashes[i] = MurmurHash3.hashLong(rep, seed);
+			hashes[i] = MurmurHash3.hashLong(kmer, seed);
 			seed = (int) hashes[i];
 		}
 		return hashes;

@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.scaleunlimited.tenaya.data.FileSampleReader.FileFormat;
 import com.scaleunlimited.tenaya.data.CountMinSketch;
-import com.scaleunlimited.tenaya.data.KmerGenerator;
+import com.scaleunlimited.tenaya.data.EncodedKmerGenerator;
 import com.scaleunlimited.tenaya.data.FileSampleReader;
 
 public class Main {
@@ -26,23 +26,22 @@ public class Main {
 		File dump = new File(destFile);
 		int ksize = 20;
 		FileSampleReader reader = new FileSampleReader(file, FileFormat.FASTQ);
-		KmerGenerator generator = new KmerGenerator(ksize, reader);
+		EncodedKmerGenerator generator = new EncodedKmerGenerator(ksize, reader);
 		CountMinSketch sketch = new CountMinSketch(4, 400000000);
 		long start = System.nanoTime();
 		long i = 0;
 		while (generator.hasNext()) {
-			int occupancy = sketch.getOccupancy();
-			if (occupancy % 1000000 == 0) {
-				System.out.println(occupancy + "\t" + i);
+			if (i % 10000000 == 0) {
+				System.out.println(sketch.getOccupancy() + "\t" + i);
 			}
-			String kmer = generator.next();
-			sketch.addKmer(kmer, ksize);
+			long encodedKmer = generator.next();
+			sketch.addKmer(encodedKmer, ksize);
 			i++;
 		}
 		
 		System.out.println("occupancy: " + sketch.getOccupancy());
-		System.out.println("fp rate: " + sketch.falsePositiveRate());
-		sketch.dump(dump);
+		System.out.println("fp rate: " + sketch.getErrorRate());
+		sketch.writeToFile(dump);
 		long diff = System.nanoTime() - start;
 		System.out.println("took around " + TimeUnit.SECONDS.convert(diff, TimeUnit.NANOSECONDS) + "s");
 		reader.close();
