@@ -10,6 +10,8 @@ import java.util.HashMap;
 
 public class CountMinSketch {
 	
+	public static final long UNSIGNED_INT_MASK = 0x07fffffffL;
+	
 	private byte[] data;
 	private int rows, cols;
 	private int occupants;
@@ -20,10 +22,6 @@ public class CountMinSketch {
 		this.cols = cols;
 		this.occupants = 0;
 		this.data = new byte[rows * cols];
-	}
-	
-	private int getIndex(long hash) {
-		return (int) (hash & 0x07fffffffL) % cols;
 	}
 	
 	public void addKmer(String kmer, int ksize) {
@@ -38,14 +36,16 @@ public class CountMinSketch {
 	public void add(long[] hashes) {
 		boolean counted = false;
 		for (int i = 0; i < rows; i++) {
-			int index = getIndex(hashes[i]);
-			byte currentCount = data[i * cols + index];
+			int index = (int) (hashes[i] & UNSIGNED_INT_MASK) % cols;
+			int calcIndex = i * cols + index;
+			byte currentCount = data[calcIndex];
+			data[calcIndex] = (byte) (currentCount + 1);
 			if (currentCount == 0 && !counted) {
 				counted = true;
 				occupants++;
 			}
-			if (currentCount != Byte.MAX_VALUE) {
-				data[i * cols + index] = (byte) (currentCount + 1);
+			if (data[calcIndex] < 0) {
+				data[calcIndex] = Byte.MAX_VALUE;
 			}
 		}
 	}
@@ -53,7 +53,7 @@ public class CountMinSketch {
 	public int count(long[] hashes) {
 		int count = Integer.MAX_VALUE;
 		for (int i = 0; i < rows; i++) {
-			int index = getIndex(hashes[i]);
+			int index = (int) (hashes[i] & UNSIGNED_INT_MASK) % cols;
 			byte currentCount = data[i * cols + index];
 			if (currentCount < count) {
 				count = currentCount;

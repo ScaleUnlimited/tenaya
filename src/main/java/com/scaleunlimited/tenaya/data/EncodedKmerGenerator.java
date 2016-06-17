@@ -38,12 +38,12 @@ public class EncodedKmerGenerator {
 		}
 	}
 	
-	// TODO add a variable length mask corresponding to the ksize
 	private void updateChar(char currentChar) {
 		f |= Kmer.repr(currentChar);
 		r |= (Kmer.comp(currentChar) << (ksize * 2 - 2));
 	}
 	
+	// TODO add a variable length mask corresponding to the ksize
 	private void shift() {
 		f <<= 2;
 		f &= 0x0ffffffffffL;

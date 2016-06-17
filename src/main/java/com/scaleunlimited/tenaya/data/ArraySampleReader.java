@@ -1,11 +1,11 @@
 package com.scaleunlimited.tenaya.data;
 
-public class SimpleSampleReader implements SampleReader {
+public class ArraySampleReader implements SampleReader {
 	
 	private String[] sequences;
 	private int index;
 	
-	public SimpleSampleReader(String[] seqs) {
+	public ArraySampleReader(String[] seqs) {
 		sequences = seqs;
 		index = 0;
 	}
