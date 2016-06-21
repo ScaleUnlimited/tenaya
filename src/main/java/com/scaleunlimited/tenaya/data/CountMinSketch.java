@@ -28,26 +28,29 @@ public class CountMinSketch {
 		addKmer(Kmer.encode(kmer, ksize), ksize);
 	}
 	
-	public void addKmer(long kmer, int ksize) {
+	public int addKmer(long kmer, int ksize) {
 		lastHashes = Kmer.hashMurmur(kmer, rows, ksize, lastHashes);
-		add(lastHashes);
+		return add(lastHashes);
 	}
 	
-	public void add(long[] hashes) {
-		boolean counted = false;
+	public int add(long[] hashes) {
+		int count = Integer.MAX_VALUE;
 		for (int i = 0; i < rows; i++) {
 			int index = (int) (hashes[i] & UNSIGNED_INT_MASK) % cols;
 			int calcIndex = i * cols + index;
 			byte currentCount = data[calcIndex];
 			data[calcIndex] = (byte) (currentCount + 1);
-			if (currentCount == 0 && !counted) {
-				counted = true;
-				occupants++;
+			if (currentCount < count) {
+				count = currentCount;
 			}
 			if (data[calcIndex] < 0) {
 				data[calcIndex] = Byte.MAX_VALUE;
 			}
 		}
+		if (count == 0) {
+			occupants++;
+		}
+		return count;
 	}
 	
 	public int count(long[] hashes) {

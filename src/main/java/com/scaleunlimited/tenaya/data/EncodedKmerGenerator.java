@@ -1,7 +1,5 @@
 package com.scaleunlimited.tenaya.data;
 
-import java.util.Iterator;
-
 public class EncodedKmerGenerator {
 
 	private SampleReader reader;
@@ -11,10 +9,13 @@ public class EncodedKmerGenerator {
 	private int currentIndex;
 	private int len;
 	private long f, r;
+	private long shiftMask;
 	
 	public EncodedKmerGenerator(int ksize, SampleReader sampleReader) {
 		reader = sampleReader;
 		this.ksize = ksize;
+
+		shiftMask = ~(0x0ffffffffffffffffL << (ksize * 2));
 		
 		getNewSequence();
 	}
@@ -43,10 +44,9 @@ public class EncodedKmerGenerator {
 		r |= (Kmer.comp(currentChar) << (ksize * 2 - 2));
 	}
 	
-	// TODO add a variable length mask corresponding to the ksize
 	private void shift() {
 		f <<= 2;
-		f &= 0x0ffffffffffL;
+		f &= shiftMask;
 		r >>>= 2;
 	}
 

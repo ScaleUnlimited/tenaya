@@ -2,23 +2,18 @@ package com.scaleunlimited.tenaya;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import com.scaleunlimited.tenaya.data.FileSampleReader.FileFormat;
+import com.scaleunlimited.tenaya.data.Signature;
 import com.scaleunlimited.tenaya.data.CountMinSketch;
 import com.scaleunlimited.tenaya.data.EncodedKmerGenerator;
 import com.scaleunlimited.tenaya.data.FileSampleReader;
+import com.scaleunlimited.tenaya.data.MurmurHash3;
 
 public class Main {
 
@@ -34,11 +29,12 @@ public class Main {
 	
 	public static void loadIntoCounting(String sourceFile, String destFile) throws IOException {
 		File file = new File(sourceFile);
-		File dump = new File(destFile);
+		File dest = new File(destFile);
 		int ksize = 20;
 		FileSampleReader reader = new FileSampleReader(file, FileFormat.FASTQ);
 		EncodedKmerGenerator generator = new EncodedKmerGenerator(ksize, reader);
 		CountMinSketch sketch = new CountMinSketch(4, 400000000);
+		Signature sig = new Signature(1000);
 		long start = System.currentTimeMillis();
 		long i = 0;
 		while (generator.hasNext()) {
@@ -47,15 +43,21 @@ public class Main {
 			}
 			long encodedKmer = generator.next();
 			sketch.addKmer(encodedKmer, ksize);
+			if (sketch.countKmer(encodedKmer, ksize) == 1) {
+				sig.add(MurmurHash3.fmix64(encodedKmer));
+			}
 			i++;
 		}
-		
-		System.out.println("occupancy: " + sketch.getOccupancy());
-		System.out.println("fp rate: " + sketch.getErrorRate());
-		sketch.writeToFile(dump);
-		long diff = System.currentTimeMillis() - start;
-		System.out.println("took around " + TimeUnit.SECONDS.convert(diff, TimeUnit.MILLISECONDS) + "s");
+
 		reader.close();
+		sketch.writeToFile(dest);
+
+		long diff = System.currentTimeMillis() - start;
+		System.out.println("occupancy: " + sketch.getOccupancy());
+		System.out.println("error rate: " + sketch.getErrorRate());
+		System.out.println("took around " + TimeUnit.SECONDS.convert(diff, TimeUnit.MILLISECONDS) + "s");
+		
+		sig.writeToFile(new File(dest.toPath().toString() + ".sig"));
 	}
 	
 	public static void loadIntoCountingThreaded(String sourceFile, String destFile) throws IOException, InterruptedException {
@@ -64,6 +66,7 @@ public class Main {
 		int ksize = 20;
 		
 		FileSampleReader reader = new FileSampleReader(source, FileFormat.FASTQ);
+		Signature sig = new Signature(10000);
 		BlockingQueue<Runnable> linkedBlockingDeque = new LinkedBlockingDeque<Runnable>(800);
 		ExecutorService executor = new ThreadPoolExecutor(8, 8, 30,
 		    TimeUnit.SECONDS, linkedBlockingDeque,
@@ -79,7 +82,7 @@ public class Main {
 			if (line == null) {
 				break;
 			}
-			KmerProcessor process = new KmerProcessor(ksize, line, sketch);
+			KmerProcessor process = new KmerProcessor(ksize, line, sketch, sig);
 			while (linkedBlockingDeque.size() == 800) {
 				Thread.yield();
 			}
@@ -103,6 +106,8 @@ public class Main {
 		System.out.println("error rate: " + sketch.getErrorRate());
 		long diff = System.currentTimeMillis() - start;
 		System.out.println("took around " + TimeUnit.SECONDS.convert(diff, TimeUnit.MILLISECONDS) + "s");
+		
+		sig.writeToFile(new File(dest.toPath().toString() + ".sig"));
 	}
 	
 }
