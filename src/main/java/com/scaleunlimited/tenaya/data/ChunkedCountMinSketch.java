@@ -8,19 +8,27 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
 
-public class CountMinSketch implements KmerCounter {
+public class ChunkedCountMinSketch implements KmerCounter {
 	
 	public static final long UNSIGNED_INT_MASK = 0x07fffffffL;
 	
-	private byte[] data;
+	private byte[][] data;
+	private int chunks;
+	private int chunkSize;
 	private int rows, cols;
 	private int occupants;
 	
-	public CountMinSketch(int rows, int cols) {
+	public ChunkedCountMinSketch(int rows, int cols) {
+		this(rows, cols, 1);
+	}
+	
+	public ChunkedCountMinSketch(int rows, int cols, int chunks) {
 		this.rows = rows;
 		this.cols = cols;
+		this.chunks = chunks;
+		this.chunkSize = rows * cols / chunks;
 		this.occupants = 0;
-		this.data = new byte[rows * cols];
+		this.data = new byte[chunks][chunkSize];
 	}
 	
 	public int addKmer(String kmer, int ksize) {
@@ -36,13 +44,17 @@ public class CountMinSketch implements KmerCounter {
 		for (int i = 0; i < rows; i++) {
 			int index = (int) (hashes[i] & UNSIGNED_INT_MASK) % cols;
 			int calcIndex = i * cols + index;
-			byte currentCount = data[calcIndex];
-			data[calcIndex] = (byte) (currentCount + 1);
+			int chunk = calcIndex / chunkSize;
+			int chunkIndex = calcIndex % chunkSize;
+			byte currentCount;
+			synchronized(data[chunk]) {
+				currentCount = data[chunk][chunkIndex];
+				if (currentCount != Byte.MAX_VALUE) {
+					data[chunk][chunkIndex] = (byte) (currentCount + 1);
+				}
+			}
 			if (currentCount < count) {
 				count = currentCount;
-			}
-			if (data[calcIndex] < 0) {
-				data[calcIndex] = Byte.MAX_VALUE;
 			}
 		}
 		if (count == 0) {
@@ -55,7 +67,10 @@ public class CountMinSketch implements KmerCounter {
 		int count = Integer.MAX_VALUE;
 		for (int i = 0; i < rows; i++) {
 			int index = (int) (hashes[i] & UNSIGNED_INT_MASK) % cols;
-			byte currentCount = data[i * cols + index];
+			int calcIndex = i * cols + index;
+			int chunk = calcIndex / chunkSize;
+			int chunkIndex = calcIndex % chunkSize;
+			byte currentCount = data[chunk][chunkIndex];
 			if (currentCount < count) {
 				count = currentCount;
 			}
@@ -82,13 +97,17 @@ public class CountMinSketch implements KmerCounter {
 	
 	public void readFromFile(File file) throws IOException {
 		FileInputStream inputStream = new FileInputStream(file);
-		inputStream.read(data);
+		for (int i = 0; i < chunks; i++) {
+			inputStream.read(data[i]);
+		}
 		inputStream.close();
 	}
 	
 	public void writeToFile(File file) throws IOException {
 		FileOutputStream outputStream = new FileOutputStream(file);
-		outputStream.write(data);
+		for (int i = 0; i < chunks; i++) {
+			outputStream.write(data[i]);
+		}
 		outputStream.close();
 		
 		HashMap<String, String> properties = new HashMap<String, String>();

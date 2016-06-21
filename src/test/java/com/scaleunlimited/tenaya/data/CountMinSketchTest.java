@@ -104,6 +104,72 @@ public class CountMinSketchTest {
 	}
 	
 	@Test
+	public void testChunkedBasic() {
+		ChunkedCountMinSketch sketch = new ChunkedCountMinSketch(4, 1000000, 1000);
+		sketch.addKmer(10, 32);
+		assertEquals("Sketch count should be one after addition", 1, sketch.countKmer(10, 32));
+		sketch.addKmer(10, 32);
+		assertEquals("Sketch occupancy should be one after two identical additions", 1, sketch.getOccupancy());
+	}
+	
+	@Test
+	public void testChunkedSketch() throws InterruptedException {
+		final int NUM_THREADS = 20;
+		final int NUM_KMERS = 1000000;
+		final int MAX_COUNT = 5;
+		final CountMinSketch reference = new CountMinSketch(4, 1000000);
+		final ChunkedCountMinSketch chunked = new ChunkedCountMinSketch(4, 1000000, 1000);
+		final AtomicBoolean ready = new AtomicBoolean(false);
+		final AtomicInteger threadCounter = new AtomicInteger();
+		long seed = System.nanoTime();
+		System.out.println("seed: " + seed);
+		Random rng = new Random(seed);
+		final long[][] counts = new long[NUM_KMERS][2];
+		for (int i = 0; i < NUM_KMERS; i++) {
+			counts[i][0] = rng.nextLong();
+			counts[i][1] = (rng.nextLong() & 0x07fffffff) % MAX_COUNT;
+			for (int j = 0; j < (counts[i][1] * NUM_THREADS); j++) {
+				reference.addKmer(counts[i][0], 32);
+			}
+		}
+		
+		for (int i = 0; i < NUM_THREADS; i++) {
+			Thread t = new Thread() {
+				@Override
+				public void run() {
+					while (!ready.get()) {
+						try {
+							Thread.sleep(1);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+					for (int i = 0; i < NUM_KMERS; i++) {
+						for (int j = 0; j < counts[i][1]; j++) {
+							chunked.addKmer(counts[i][0], 32);
+						}
+					}
+					threadCounter.incrementAndGet();
+				}
+			};
+			t.start();
+		}
+		
+		ready.set(true);
+		
+		while (threadCounter.get() != NUM_THREADS) {
+			Thread.sleep(1);
+		}
+		
+		for (int i = 0; i < NUM_KMERS; i++) {
+			long kmer = counts[i][0];
+			long refCount = reference.countKmer(kmer, 32);
+			long chunkedCount = chunked.countKmer(kmer, 32);
+			assertEquals("Chunked Count-Min Sketch should have the same counts as the regular variant", refCount, chunkedCount);
+		}
+	}
+	
+	@Test
 	public void testRandomThreaded() throws InterruptedException {
 		final int NUM_THREADS = 8;
 		final int NUM_KMERS = 100000;

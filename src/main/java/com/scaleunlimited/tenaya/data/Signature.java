@@ -23,9 +23,6 @@ public class Signature {
 	}
 	
 	public void add(long hash) {
-		if (count % 10000000 == 0) {
-			System.out.println("sig: " + count);
-		}
 		if (count < size) {
 			synchronized(this) {
 				for (int i = 0; i < count; i++) {

@@ -23,7 +23,7 @@ public class FileSampleReader implements SampleReader, Closeable {
 	public FileSampleReader(File file, FileFormat format) {
 		try {
 			fileReader = new FileReader(file);
-			bufferedReader = new BufferedReader(fileReader, 1024 * 1024);
+			bufferedReader = new BufferedReader(fileReader, 100 * 1024 * 1024);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}

@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.scaleunlimited.tenaya.data.FileSampleReader.FileFormat;
 import com.scaleunlimited.tenaya.data.Signature;
+import com.scaleunlimited.tenaya.data.ChunkedCountMinSketch;
 import com.scaleunlimited.tenaya.data.CountMinSketch;
 import com.scaleunlimited.tenaya.data.EncodedKmerGenerator;
 import com.scaleunlimited.tenaya.data.FileSampleReader;
@@ -71,7 +72,8 @@ public class Main {
 		ExecutorService executor = new ThreadPoolExecutor(8, 8, 30,
 		    TimeUnit.SECONDS, linkedBlockingDeque,
 		    new ThreadPoolExecutor.CallerRunsPolicy());
-		CountMinSketch sketch = new CountMinSketch(4, 400000000);
+		ChunkedCountMinSketch sketch = new ChunkedCountMinSketch(4, 400000000, 10000);
+		//CountMinSketch sketch = new CountMinSketch(4, 400000000);
 		
 		long start = System.currentTimeMillis();
 		long i = 0;
@@ -109,5 +111,5 @@ public class Main {
 		
 		sig.writeToFile(new File(dest.toPath().toString() + ".sig"));
 	}
-	
+		
 }
