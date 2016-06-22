@@ -22,7 +22,7 @@ public class EncodedKmerGenerator {
 	
 	private void getNewSequence() {
 		currentSequence = reader.readSequence();
-		more = (currentSequence != null);
+		more = (currentSequence != null && currentSequence.length() != 0);
 		if (more) {
 			len = currentSequence.length();
 			prepareNewSequence();

@@ -10,8 +10,6 @@ import java.util.HashMap;
 
 public class CountMinSketch implements KmerCounter {
 	
-	public static final long UNSIGNED_INT_MASK = 0x07fffffffL;
-	
 	private byte[] data;
 	private int rows, cols;
 	private int occupants;
@@ -34,7 +32,7 @@ public class CountMinSketch implements KmerCounter {
 	public int add(long[] hashes) {
 		int count = Integer.MAX_VALUE;
 		for (int i = 0; i < rows; i++) {
-			int index = (int) (hashes[i] & UNSIGNED_INT_MASK) % cols;
+			int index = (int) (hashes[i] & Kmer.UNSIGNED_INT_MASK) % cols;
 			int calcIndex = i * cols + index;
 			byte currentCount = data[calcIndex];
 			data[calcIndex] = (byte) (currentCount + 1);
@@ -54,7 +52,7 @@ public class CountMinSketch implements KmerCounter {
 	public int count(long[] hashes) {
 		int count = Integer.MAX_VALUE;
 		for (int i = 0; i < rows; i++) {
-			int index = (int) (hashes[i] & UNSIGNED_INT_MASK) % cols;
+			int index = (int) (hashes[i] & Kmer.UNSIGNED_INT_MASK) % cols;
 			byte currentCount = data[i * cols + index];
 			if (currentCount < count) {
 				count = currentCount;

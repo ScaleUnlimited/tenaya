@@ -1,50 +1,59 @@
 package com.scaleunlimited.tenaya.data;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.yaml.snakeyaml.Yaml;
 
 public class Signature {
 	
 	private int count;
 	private int size;
 	private long[] data;
+	private int ksize;
 	
-	private Signature(int size, long[] data) {
+	private Signature(int ksize, int size, long[] data) {
 		this.size = size;
 		this.count = 0;
 		this.data = data;
+		this.ksize = ksize;
+	}
+	
+	public Signature(int ksize, int size) {
+		this(ksize, size, new long[size]);
 	}
 	
 	public Signature(int size) {
-		this(size, new long[size]);
+		this(0, size);
 	}
 	
-	public void add(long hash) {
+	public synchronized void add(long hash) {
+		if (hash == 0) {
+			System.out.println("got a zero!");
+		}
 		if (count < size) {
-			synchronized(this) {
-				for (int i = 0; i < count; i++) {
-					if (data[i] == hash) {
-						return;
-					}
+			for (int i = 0; i < count; i++) {
+				if (data[i] == hash) {
+					return;
 				}
-				data[count] = hash;
-				if (count == (size - 1)) {
-					Arrays.sort(data);
-				}
+			}
+			data[count] = hash;
+			if (count == (size - 1)) {
+				Arrays.sort(data);
 			}
 		} else if (data[size-1] > hash) {
 			int index = Arrays.binarySearch(data, hash);
 			if (index < 0) {
-				synchronized(this) {
-					int insertion = -(index + 1);
-					for (int i = (size - 1); i > insertion; i--) {
-						data[i] = data[i - 1];
-					}
-					data[insertion] = hash;
+				int insertion = -(index + 1);
+				for (int i = (size - 1); i > insertion; i--) {
+					data[i] = data[i - 1];
 				}
+				data[insertion] = hash;
 			}
 		}
 		count++;
@@ -72,7 +81,7 @@ public class Signature {
 				matches++;
 			}
 		}
-		return ((float) matches) / ((float) size);
+		return ((double) matches) / ((double) size);
 	}
 	
 	public void addAll(Signature other) {
@@ -83,18 +92,38 @@ public class Signature {
 	}
 	
 	public Signature combine(Signature other) {
-		Signature combined = new Signature(size, data);
+		Signature combined = new Signature(ksize, size, data);
 		combined.addAll(other);
 		return combined;
 	}
 	
 	public void writeToFile(File file) throws IOException {
+		Map<String, Object> contents = new HashMap<String, Object>();
+		contents.put("version", "0.1");
+		Map<String, Object> signature = new HashMap<String, Object>();
+		signature.put("ksize", new Integer(ksize));
+		signature.put("hashes", data);
+		signature.put("num", new Integer(size));
+		contents.put("signature", signature);
 		FileWriter infoWriter = new FileWriter(file);
-		PrintWriter printWriter = new PrintWriter(infoWriter);
+		Yaml yaml = new Yaml();
+		yaml.dump(contents, infoWriter);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static Signature createFromFile(File file) throws IOException {
+		Yaml yaml = new Yaml();
+		Map<String, Object> contents = (Map<String, Object>) yaml.load(new FileReader(file));
+		Map<String, Object> signature = (Map<String, Object>) contents.get("signature");
+		int ksize = ((Integer) signature.get("ksize")).intValue();
+		int size = ((Integer) signature.get("num")).intValue();
+		String hashArray = signature.get("hashes").toString();
+		String[] tokens = hashArray.substring(1, hashArray.length() - 1).split("\\s*,\\s*");
+		long[] hashes = new long[size];
 		for (int i = 0; i < size; i++) {
-			printWriter.format("%08X\n", data[i]);
+			hashes[i] = Long.parseLong(tokens[i]);
 		}
-		printWriter.close();
+		return new Signature(ksize, size, hashes);
 	}
 
 }

@@ -9,6 +9,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import com.scaleunlimited.tenaya.data.FileSampleReader.FileFormat;
+import com.scaleunlimited.tenaya.data.Kmer;
 import com.scaleunlimited.tenaya.data.Signature;
 import com.scaleunlimited.tenaya.data.ChunkedCountMinSketch;
 import com.scaleunlimited.tenaya.data.CountMinSketch;
@@ -20,7 +21,11 @@ public class Main {
 
 	public static void main(String[] args) {
 		try {
-			loadIntoCountingThreaded(args[0], args[1]);
+			//compareSignatures(args[0], args[1]);
+			//loadIntoCountingThreaded(args[0], args[1]);
+			loadIntoCountingThreaded("C:/Users/Ryan/Desktop/drop/purpuratus.1.fasta", "C:/Users/Ryan/Desktop/drop/purpuratus1/neg");
+			loadIntoCountingThreaded("C:/Users/Ryan/Desktop/drop/purpuratus.2.fasta", "C:/Users/Ryan/Desktop/drop/purpuratus2/neg");
+			compareSignatures("C:/Users/Ryan/Desktop/drop/purpuratus1/neg.sig", "C:/Users/Ryan/Desktop/drop/purpuratus2/neg.sig");
 		} catch (Throwable t) {
 			System.err.println("Tool failed: " + t.getMessage());
 			t.printStackTrace();
@@ -32,10 +37,10 @@ public class Main {
 		File file = new File(sourceFile);
 		File dest = new File(destFile);
 		int ksize = 20;
-		FileSampleReader reader = new FileSampleReader(file, FileFormat.FASTQ);
+		FileSampleReader reader = new FileSampleReader(file, sourceFile.toLowerCase().endsWith(".fasta") ? FileFormat.FASTA : FileFormat.FASTQ);
 		EncodedKmerGenerator generator = new EncodedKmerGenerator(ksize, reader);
-		CountMinSketch sketch = new CountMinSketch(4, 400000000);
-		Signature sig = new Signature(1000);
+		CountMinSketch sketch = new CountMinSketch(4, 500000000);
+		Signature sig = new Signature(ksize, 1000);
 		long start = System.currentTimeMillis();
 		long i = 0;
 		while (generator.hasNext()) {
@@ -45,13 +50,13 @@ public class Main {
 			long encodedKmer = generator.next();
 			sketch.addKmer(encodedKmer, ksize);
 			if (sketch.countKmer(encodedKmer, ksize) == 1) {
-				sig.add(MurmurHash3.fmix64(encodedKmer));
+				sig.add(MurmurHash3.fmix64(encodedKmer) & Kmer.UNSIGNED_INT_MASK);
 			}
 			i++;
 		}
 
 		reader.close();
-		sketch.writeToFile(dest);
+		//sketch.writeToFile(dest);
 
 		long diff = System.currentTimeMillis() - start;
 		System.out.println("occupancy: " + sketch.getOccupancy());
@@ -66,14 +71,14 @@ public class Main {
 		File dest = new File(destFile);
 		int ksize = 20;
 		
-		FileSampleReader reader = new FileSampleReader(source, FileFormat.FASTQ);
-		Signature sig = new Signature(10000);
-		BlockingQueue<Runnable> linkedBlockingDeque = new LinkedBlockingDeque<Runnable>(800);
+		FileSampleReader reader = new FileSampleReader(source, sourceFile.toLowerCase().endsWith(".fasta") ? FileFormat.FASTA : FileFormat.FASTQ);
+		Signature sig = new Signature(ksize, 1000);
+		BlockingQueue<Runnable> linkedBlockingDeque = new LinkedBlockingDeque<Runnable>(400);
 		ExecutorService executor = new ThreadPoolExecutor(8, 8, 30,
 		    TimeUnit.SECONDS, linkedBlockingDeque,
 		    new ThreadPoolExecutor.CallerRunsPolicy());
-		ChunkedCountMinSketch sketch = new ChunkedCountMinSketch(4, 400000000, 10000);
-		//CountMinSketch sketch = new CountMinSketch(4, 400000000);
+		ChunkedCountMinSketch sketch = new ChunkedCountMinSketch(4, 500000000, 10000);
+		//CountMinSketch sketch = new CountMinSketch(4, 500000000);
 		
 		long start = System.currentTimeMillis();
 		long i = 0;
@@ -89,7 +94,7 @@ public class Main {
 				Thread.yield();
 			}
 			executor.submit(process);
-			if (i % 10000000 == 0) {
+			if (i % 10000000 < line.length()) {
 				System.out.println(sketch.getOccupancy() + "\t" + i + "\t" + (System.currentTimeMillis() - start) + "ms");
 			}
 			i += line.length();
@@ -100,7 +105,7 @@ public class Main {
 			Thread.sleep(100);
 		}
 		
-		sketch.writeToFile(dest);
+		//sketch.writeToFile(dest);
 
 		reader.close();
 	
@@ -110,6 +115,15 @@ public class Main {
 		System.out.println("took around " + TimeUnit.SECONDS.convert(diff, TimeUnit.MILLISECONDS) + "s");
 		
 		sig.writeToFile(new File(dest.toPath().toString() + ".sig"));
+		
+		sketch = null;
+		System.gc();
+	}
+	
+	public static void compareSignatures(String firstSig, String secondSig) throws IOException {
+		Signature first = Signature.createFromFile(new File(firstSig));
+		Signature second = Signature.createFromFile(new File(secondSig));
+		System.out.println("Similarity: " + first.jaccard(second) * 100 + "%");
 	}
 		
 }

@@ -10,8 +10,6 @@ import java.util.HashMap;
 
 public class ChunkedCountMinSketch implements KmerCounter {
 	
-	public static final long UNSIGNED_INT_MASK = 0x07fffffffL;
-	
 	private byte[][] data;
 	private int chunks;
 	private int chunkSize;
@@ -42,7 +40,7 @@ public class ChunkedCountMinSketch implements KmerCounter {
 	public int add(long[] hashes) {
 		int count = Integer.MAX_VALUE;
 		for (int i = 0; i < rows; i++) {
-			int index = (int) (hashes[i] & UNSIGNED_INT_MASK) % cols;
+			int index = (int) (hashes[i] & Kmer.UNSIGNED_INT_MASK) % cols;
 			int calcIndex = i * cols + index;
 			int chunk = calcIndex / chunkSize;
 			int chunkIndex = calcIndex % chunkSize;
@@ -66,7 +64,7 @@ public class ChunkedCountMinSketch implements KmerCounter {
 	public int count(long[] hashes) {
 		int count = Integer.MAX_VALUE;
 		for (int i = 0; i < rows; i++) {
-			int index = (int) (hashes[i] & UNSIGNED_INT_MASK) % cols;
+			int index = (int) (hashes[i] & Kmer.UNSIGNED_INT_MASK) % cols;
 			int calcIndex = i * cols + index;
 			int chunk = calcIndex / chunkSize;
 			int chunkIndex = calcIndex % chunkSize;

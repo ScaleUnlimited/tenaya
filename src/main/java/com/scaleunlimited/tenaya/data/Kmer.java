@@ -96,5 +96,7 @@ public class Kmer {
 		}
 		return hashes;
 	}
+
+	public static final long UNSIGNED_INT_MASK = 0x07fffffffL;
 	
 }

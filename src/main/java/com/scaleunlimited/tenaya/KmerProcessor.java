@@ -1,6 +1,7 @@
 package com.scaleunlimited.tenaya;
 
 import com.scaleunlimited.tenaya.data.EncodedKmerGenerator;
+import com.scaleunlimited.tenaya.data.Kmer;
 import com.scaleunlimited.tenaya.data.KmerCounter;
 import com.scaleunlimited.tenaya.data.MurmurHash3;
 import com.scaleunlimited.tenaya.data.Signature;
@@ -26,7 +27,7 @@ public class KmerProcessor implements Runnable {
 			long encodedKmer = generator.next();
 			int count = counter.addKmer(encodedKmer, ksize);
 			if (count == 1) {
-				sig.add(MurmurHash3.fmix64(encodedKmer));
+				sig.add(MurmurHash3.hashLong(encodedKmer, 42));
 			}
 		}
 	}
