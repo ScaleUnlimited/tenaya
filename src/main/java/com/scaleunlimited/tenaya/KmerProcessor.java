@@ -26,7 +26,7 @@ public class KmerProcessor implements Runnable {
 		while (generator.hasNext()) {
 			long encodedKmer = generator.next();
 			int count = counter.addKmer(encodedKmer, ksize);
-			if (count == 1) {
+			if (count >= 4) {
 				sig.add(MurmurHash3.hashLong(encodedKmer, 42));
 			}
 		}

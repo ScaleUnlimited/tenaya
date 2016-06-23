@@ -33,9 +33,6 @@ public class Signature {
 	}
 	
 	public synchronized void add(long hash) {
-		if (hash == 0) {
-			System.out.println("got a zero!");
-		}
 		if (count < size) {
 			for (int i = 0; i < count; i++) {
 				if (data[i] == hash) {

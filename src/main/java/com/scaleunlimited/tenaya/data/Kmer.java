@@ -84,6 +84,11 @@ public class Kmer {
 			return 2L;
 		}
 	}
+	
+	public static long hashMurmur(long kmer, int ksize) {
+		int seed = 42;
+		return MurmurHash3.hashLong(kmer, seed);
+	}
 
 	public static long[] hashMurmur(long kmer, int n, int ksize, long[] hashes) {
 		if (hashes == null) {

@@ -13,8 +13,19 @@ public class ChunkedCountMinSketch implements KmerCounter {
 	private byte[][] data;
 	private int chunks;
 	private int chunkSize;
-	private int rows, cols;
+	private int rows;
+	private int[] rowSizes;
 	private int occupants;
+	private int size;
+	
+	private final ThreadLocal<int[][]> indices = new ThreadLocal<int[][]>() {
+
+		@Override
+		protected int[][] initialValue() {
+			return new int[rows][2];
+		}
+		
+	};
 	
 	public ChunkedCountMinSketch(int rows, int cols) {
 		this(rows, cols, 1);
@@ -22,11 +33,51 @@ public class ChunkedCountMinSketch implements KmerCounter {
 	
 	public ChunkedCountMinSketch(int rows, int cols, int chunks) {
 		this.rows = rows;
-		this.cols = cols;
+		this.rowSizes = generatePrimesAround(cols, rows);
+		this.size = 0;
+		for (int i = 0; i < rows; i++) {
+			size += rowSizes[i];
+		}
 		this.chunks = chunks;
-		this.chunkSize = rows * cols / chunks;
+		this.chunkSize = (size / chunks) + 1;
 		this.occupants = 0;
 		this.data = new byte[chunks][chunkSize];
+	}
+	
+	public static int[] generatePrimesAround(int target, int multiplicity) {
+		if (target % 2 == 0) {
+			target--;
+		}
+		int[] primes = new int[multiplicity];
+		int count = 0;
+		while (count < multiplicity) {
+			int upperBound = (int) Math.floor(Math.sqrt(target));
+			for (int i = 3; i <= upperBound; i++) {
+				if (target % i == 0) {
+					break;
+				} else if (i == upperBound) {
+					primes[count++] = target;
+					System.out.println("prime: " + target);
+				}
+			}
+			target -= 2;
+		}
+		return primes;
+	}
+	
+	public int[][] calculateIndices(long hash) {
+		int[][] indices = this.indices.get();
+		int prevSum = 0;
+		for (int i = 0; i < rows; i++) {
+			int bound = (int) (hash & Kmer.UNSIGNED_INT_MASK) % rowSizes[i];
+			int rawIndex = bound + prevSum;
+			int chunk = rawIndex / chunkSize;
+			int chunkIndex = rawIndex % chunkSize;
+			indices[i][0] = chunk;
+			indices[i][1] = chunkIndex;
+			prevSum += rowSizes[i];
+		}
+		return indices;
 	}
 	
 	public int addKmer(String kmer, int ksize) {
@@ -34,16 +85,15 @@ public class ChunkedCountMinSketch implements KmerCounter {
 	}
 	
 	public int addKmer(long kmer, int ksize) {
-		return add(Kmer.hashMurmur(kmer, rows, ksize, null));
+		return add(Kmer.hashMurmur(kmer, ksize));
 	}
 	
-	public int add(long[] hashes) {
+	public int add(long hash) {
 		int count = Integer.MAX_VALUE;
+		int[][] indices = calculateIndices(hash);
 		for (int i = 0; i < rows; i++) {
-			int index = (int) (hashes[i] & Kmer.UNSIGNED_INT_MASK) % cols;
-			int calcIndex = i * cols + index;
-			int chunk = calcIndex / chunkSize;
-			int chunkIndex = calcIndex % chunkSize;
+			int chunk = indices[i][0];
+			int chunkIndex = indices[i][1];
 			byte currentCount;
 			synchronized(data[chunk]) {
 				currentCount = data[chunk][chunkIndex];
@@ -61,13 +111,12 @@ public class ChunkedCountMinSketch implements KmerCounter {
 		return count;
 	}
 	
-	public int count(long[] hashes) {
+	public int count(long hash) {
 		int count = Integer.MAX_VALUE;
+		int[][] indices = calculateIndices(hash);
 		for (int i = 0; i < rows; i++) {
-			int index = (int) (hashes[i] & Kmer.UNSIGNED_INT_MASK) % cols;
-			int calcIndex = i * cols + index;
-			int chunk = calcIndex / chunkSize;
-			int chunkIndex = calcIndex % chunkSize;
+			int chunk = indices[i][0];
+			int chunkIndex = indices[i][1];
 			byte currentCount = data[chunk][chunkIndex];
 			if (currentCount < count) {
 				count = currentCount;
@@ -77,8 +126,7 @@ public class ChunkedCountMinSketch implements KmerCounter {
 	}
 	
 	public int countKmer(long kmer, int ksize) {
-		long[] hashes = Kmer.hashMurmur(kmer, rows, ksize, null);
-		return count(hashes);
+		return count(Kmer.hashMurmur(kmer, ksize));
 	}
 	
 	public int countKmer(String kmer, int ksize) {
@@ -86,7 +134,11 @@ public class ChunkedCountMinSketch implements KmerCounter {
 	}
 	
 	public double getErrorRate() {
-		return Math.pow(1.0 - Math.pow(1.0 - (1.0 / ((double) cols)), occupants), rows);
+		double product = 1.0;
+		for (int i = 0; i < rows; i++) {
+			product *= (1.0 - Math.pow(1.0 - 1.0 / rowSizes[i], occupants));
+		}
+		return product;
 	}
 	
 	public int getOccupancy() {
@@ -110,7 +162,7 @@ public class ChunkedCountMinSketch implements KmerCounter {
 		
 		HashMap<String, String> properties = new HashMap<String, String>();
 		properties.put("Rows", Integer.toString(rows));
-		properties.put("Columns", Integer.toString(cols));
+		properties.put("Size", Integer.toString(size));
 		properties.put("Occupancy", Integer.toString(occupants));
 		properties.put("Error Rate", Double.toString(getErrorRate()));
 		FileWriter infoWriter = new FileWriter(new File(file.toPath().toString() + ".info"));
