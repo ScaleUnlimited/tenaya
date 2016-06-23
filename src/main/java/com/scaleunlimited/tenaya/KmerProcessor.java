@@ -1,7 +1,6 @@
 package com.scaleunlimited.tenaya;
 
 import com.scaleunlimited.tenaya.data.EncodedKmerGenerator;
-import com.scaleunlimited.tenaya.data.Kmer;
 import com.scaleunlimited.tenaya.data.KmerCounter;
 import com.scaleunlimited.tenaya.data.MurmurHash3;
 import com.scaleunlimited.tenaya.data.Signature;
@@ -13,12 +12,14 @@ public class KmerProcessor implements Runnable {
 	private Signature sig;
 	private KmerCounter counter;
 	private int ksize;
+	private int cutoff;
 	
-	public KmerProcessor(int ksize, String sequence, KmerCounter output, Signature signature) {
+	public KmerProcessor(int ksize, String sequence, KmerCounter output, Signature signature, int cutoff) {
 		this.ksize = ksize;
 		sig = signature;
 		generator = new EncodedKmerGenerator(ksize, new StringSampleReader(sequence));
 		counter = output;
+		this.cutoff = cutoff;
 	}
 
 	@Override
@@ -26,7 +27,7 @@ public class KmerProcessor implements Runnable {
 		while (generator.hasNext()) {
 			long encodedKmer = generator.next();
 			int count = counter.addKmer(encodedKmer, ksize);
-			if (count >= 4) {
+			if (count >= cutoff) {
 				sig.add(MurmurHash3.hashLong(encodedKmer, 42));
 			}
 		}

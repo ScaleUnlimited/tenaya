@@ -1,8 +1,20 @@
 package com.scaleunlimited.tenaya.data;
 
 public class Kmer {
-
+	
 	public static long encode(String sequence, int ksize) {
+		return encode(sequence, ksize, false);
+	}
+
+	public static long encode(String sequence, int ksize, boolean dna) {
+		if (dna) {
+			return encodeDna(sequence, ksize);
+		} else {
+			return encodeNormal(sequence, ksize);
+		}
+	}
+	
+	private static long encodeDna(String sequence, int ksize) {
 		long f = 0, r = 0;
 		for (int i = 0, j = (ksize - 1); i < ksize; i++, j--) {
 			f <<= 2;
@@ -13,6 +25,17 @@ public class Kmer {
 		}
 		
 		return unify(f, r);
+	}
+	
+	private static long encodeNormal(String sequence, int ksize) {
+		long f = 0;
+		for (int i = 0; i < ksize; i++) {
+			f <<= 2;
+			
+			f |= repr(sequence.charAt(i));
+		}
+		
+		return f;
 	}
 	
 	public static String decodeForward(long encoded, int ksize) {

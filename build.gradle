@@ -12,6 +12,7 @@ repositories {
 dependencies {
     compile 'org.slf4j:slf4j-api:1.7.21'
     compile 'org.yaml:snakeyaml:1.17'
+    compile 'args4j:args4j:2.33'
 
     testCompile 'junit:junit:4.12'
 }

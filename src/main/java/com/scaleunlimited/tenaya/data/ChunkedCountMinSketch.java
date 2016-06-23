@@ -17,6 +17,7 @@ public class ChunkedCountMinSketch implements KmerCounter {
 	private int[] rowSizes;
 	private int occupants;
 	private int size;
+	private boolean dna;
 	
 	private final ThreadLocal<int[][]> indices = new ThreadLocal<int[][]>() {
 
@@ -28,10 +29,10 @@ public class ChunkedCountMinSketch implements KmerCounter {
 	};
 	
 	public ChunkedCountMinSketch(int rows, int cols) {
-		this(rows, cols, 1);
+		this(rows, cols, 1, false);
 	}
 	
-	public ChunkedCountMinSketch(int rows, int cols, int chunks) {
+	public ChunkedCountMinSketch(int rows, int cols, int chunks, boolean dna) {
 		this.rows = rows;
 		this.rowSizes = generatePrimesAround(cols, rows);
 		this.size = 0;
@@ -42,6 +43,7 @@ public class ChunkedCountMinSketch implements KmerCounter {
 		this.chunkSize = (size / chunks) + 1;
 		this.occupants = 0;
 		this.data = new byte[chunks][chunkSize];
+		this.dna = dna;
 	}
 	
 	public static int[] generatePrimesAround(int target, int multiplicity) {
@@ -57,7 +59,6 @@ public class ChunkedCountMinSketch implements KmerCounter {
 					break;
 				} else if (i == upperBound) {
 					primes[count++] = target;
-					System.out.println("prime: " + target);
 				}
 			}
 			target -= 2;
@@ -81,7 +82,7 @@ public class ChunkedCountMinSketch implements KmerCounter {
 	}
 	
 	public int addKmer(String kmer, int ksize) {
-		return addKmer(Kmer.encode(kmer, ksize), ksize);
+		return addKmer(Kmer.encode(kmer, ksize, dna), ksize);
 	}
 	
 	public int addKmer(long kmer, int ksize) {
@@ -130,7 +131,7 @@ public class ChunkedCountMinSketch implements KmerCounter {
 	}
 	
 	public int countKmer(String kmer, int ksize) {
-		return countKmer(Kmer.encode(kmer, ksize), ksize);
+		return countKmer(Kmer.encode(kmer, ksize, dna), ksize);
 	}
 	
 	public double getErrorRate() {

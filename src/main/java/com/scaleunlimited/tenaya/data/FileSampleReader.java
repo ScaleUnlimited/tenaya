@@ -21,9 +21,13 @@ public class FileSampleReader implements SampleReader, Closeable {
 	private Parser parser;
 	
 	public FileSampleReader(File file, FileFormat format) {
+		this(file, format, 10 * 1024 * 1024);
+	}
+	
+	public FileSampleReader(File file, FileFormat format, int bufferSize) {
 		try {
 			fileReader = new FileReader(file);
-			bufferedReader = new BufferedReader(fileReader, 100 * 1024 * 1024);
+			bufferedReader = new BufferedReader(fileReader, bufferSize);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
