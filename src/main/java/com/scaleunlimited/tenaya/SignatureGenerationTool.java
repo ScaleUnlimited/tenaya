@@ -52,7 +52,9 @@ public class SignatureGenerationTool {
 		File dest = options.getOutputFile();
 		int ksize = options.getKsize();
 		int cutoff = options.getCutoff();
-		int queueSize = 800;
+		
+		int threadCount = options.getThreadCount();
+		int queueSize = threadCount * 100;
 		
 		FileFormat format = getFileFormat(source);
 		boolean gzip = options.getGzip();
@@ -79,7 +81,7 @@ public class SignatureGenerationTool {
 			
 			sketch.reset();
 			
-			executor = new ThreadPoolExecutor(8, 8, 30,
+			executor = new ThreadPoolExecutor(threadCount, threadCount, 30,
 			    TimeUnit.SECONDS, linkedBlockingDeque,
 			    new ThreadPoolExecutor.CallerRunsPolicy());
 			sig = new Signature(ksize, options.getSignatureSize(), cutoff);

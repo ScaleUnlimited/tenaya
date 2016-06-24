@@ -1,0 +1,21 @@
+package com.scaleunlimited.tenaya;
+
+import java.util.Arrays;
+
+public class Main {
+	
+	public static void main(String[] args) {
+		if (args.length > 0) {
+			String action = args[0].toLowerCase();
+			String[] modifiedArgs = Arrays.copyOfRange(args, 1, args.length - 1);
+			if (action.equals("compare")) {
+				SignatureComparisonTool.main(modifiedArgs);
+			} else if (action.equals("generate")) {
+				SignatureGenerationTool.main(modifiedArgs);
+			} else {
+				System.err.println("Tool failed: unknown action '" + action + "'");
+			}
+		}
+	}
+
+}

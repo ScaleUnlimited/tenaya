@@ -35,6 +35,9 @@ public class SignatureGenerationToolOptions {
 	@Option(name="-f", usage="Regex that captures the unique part of the identifier which determines sample boundaries", required=false, aliases="--filter")
 	private String filter = "sra";
 	
+	@Option(name="-t", usage="Number of threads to use", required=false, aliases="--threads")
+	private int threads = 8;
+	
 	@Option(name="--gzip", usage="Input file is gzipped", required=false)
 	private boolean gzip = false;
 	
@@ -80,6 +83,10 @@ public class SignatureGenerationToolOptions {
 	
 	public boolean getGzip() {
 		return gzip;
+	}
+	
+	public int getThreadCount() {
+		return threads;
 	}
 
 }

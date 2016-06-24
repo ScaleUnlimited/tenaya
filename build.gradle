@@ -5,6 +5,17 @@
 apply plugin: 'java'
 apply plugin: 'eclipse'
 
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
+    }
+}
+
+apply plugin: 'com.github.johnrengelman.shadow'
+
 repositories {
     jcenter()
 }
@@ -15,4 +26,13 @@ dependencies {
     compile 'args4j:args4j:2.33'
 
     testCompile 'junit:junit:4.12'
+}
+
+shadowJar {
+	baseName = 'tenaya'
+	classifier = null
+	version = null
+	manifest {
+		attributes 'Main-Class': 'com.scaleunlimited.tenaya.Main'
+	}
 }
