@@ -21,10 +21,10 @@ public class FileSampleReader implements SampleReader, Closeable {
 	private Parser parser;
 	
 	public FileSampleReader(File file, FileFormat format) {
-		this(file, format, 10 * 1024 * 1024);
+		this(file, format, 10 * 1024 * 1024, "");
 	}
 	
-	public FileSampleReader(File file, FileFormat format, int bufferSize) {
+	public FileSampleReader(File file, FileFormat format, int bufferSize, String regex) {
 		try {
 			fileReader = new FileReader(file);
 			bufferedReader = new BufferedReader(fileReader, bufferSize);
@@ -34,18 +34,12 @@ public class FileSampleReader implements SampleReader, Closeable {
 		
 		switch (format) {
 		case FASTA:
-			parser = new FastAParser(bufferedReader);
+			parser = new FastAParser(bufferedReader, regex);
 			break;
 		case FASTQ:
-			parser = new FastQParser(bufferedReader);
+			parser = new FastQParser(bufferedReader, regex);
 			break;
-		}
-		
-		parser.readIdentifier();
-	}
-	
-	public String readSequence() {
-		return parser.readSequence();
+		}	
 	}
 	
 	public String getIdentifier() {
@@ -55,5 +49,10 @@ public class FileSampleReader implements SampleReader, Closeable {
 	@Override
 	public void close() throws IOException {
 		bufferedReader.close();
+	}
+
+	@Override
+	public Sample readSample() {
+		return parser.readSample();
 	}
 }

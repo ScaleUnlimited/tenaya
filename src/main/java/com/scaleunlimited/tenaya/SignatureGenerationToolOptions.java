@@ -32,6 +32,9 @@ public class SignatureGenerationToolOptions {
 	@Option(name="-d", usage="Depth (i.e. rows or hashes) of the Count-Min Sketch", required=false, aliases="--depth")
 	private int depth = 5;
 	
+	@Option(name="-f", usage="Regex that captures the unique part of the identifier which determines sample boundaries", required=false, aliases="--filter")
+	private String filter = "sra";
+	
 	public File getInputFile() {
 		return input;
 	}
@@ -66,6 +69,10 @@ public class SignatureGenerationToolOptions {
 	
 	public int getDepth() {
 		return depth;
+	}
+	
+	public String getFilter() {
+		return filter;
 	}
 
 }

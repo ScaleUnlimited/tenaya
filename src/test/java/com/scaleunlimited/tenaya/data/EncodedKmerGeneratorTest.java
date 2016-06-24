@@ -11,9 +11,9 @@ public class EncodedKmerGeneratorTest {
 		final String testSequence = "ATTACATAACCCAATGATACCCTAGAATGAAGCTTGCCTGCACAGACACAAAACTTTTCCTACCATGAAGCTCTTATGCACATTCTAATTCTACTATTCA";
 		int ksize = 20;
 		
-		KmerGenerator regularGenerator = new KmerGenerator(ksize, new StringSampleReader(testSequence));
+		KmerGenerator regularGenerator = new KmerGenerator(ksize, new StringSample(testSequence));
 	
-		EncodedKmerGenerator encodedGenerator = new EncodedKmerGenerator(ksize, new ArraySampleReader(new String[]{testSequence}));
+		EncodedKmerGenerator encodedGenerator = new EncodedKmerGenerator(ksize, new ArraySample(new String[]{testSequence}));
 		
 		while (regularGenerator.hasNext()) {
 			String kmer = regularGenerator.next();

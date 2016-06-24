@@ -173,4 +173,15 @@ public class ChunkedCountMinSketch implements KmerCounter {
 		printWriter.close();
 	}
 
+	@Override
+	public synchronized void reset() {
+		for (int i = 0; i < chunks; i++) {
+			for (int j = 0; j < chunkSize; j++) {
+				data[i][j] = 0;
+			
+			}
+		}
+		occupants = 0;
+	}
+
 }

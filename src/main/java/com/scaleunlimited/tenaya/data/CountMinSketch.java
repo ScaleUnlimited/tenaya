@@ -103,4 +103,12 @@ public class CountMinSketch implements KmerCounter {
 		printWriter.close();
 	}
 
+	@Override
+	public synchronized void reset() {
+		for (int i = 0; i < data.length; i++) {
+			data[i] = 0;
+		}
+		occupants = 0;
+	}
+
 }

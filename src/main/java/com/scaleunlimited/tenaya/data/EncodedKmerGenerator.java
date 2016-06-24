@@ -2,7 +2,7 @@ package com.scaleunlimited.tenaya.data;
 
 public class EncodedKmerGenerator {
 
-	private SampleReader reader;
+	private Sample sample;
 	private boolean more;
 	private String currentSequence;
 	private int ksize;
@@ -11,17 +11,29 @@ public class EncodedKmerGenerator {
 	private long f, r;
 	private long shiftMask;
 	
-	public EncodedKmerGenerator(int ksize, SampleReader sampleReader) {
-		reader = sampleReader;
+	public EncodedKmerGenerator(int ksize) {
+		this(ksize, null);
+	}
+	
+	public EncodedKmerGenerator(int ksize, Sample sample) {
 		this.ksize = ksize;
 
 		shiftMask = ~(0x0ffffffffffffffffL << (ksize * 2));
 		
-		getNewSequence();
+		setSample(sample);
 	}
 	
-	private void getNewSequence() {
-		currentSequence = reader.readSequence();
+	public void setSample(Sample sample) {
+		this.sample = sample;
+		readNewSequence();
+	}
+	
+	private void readNewSequence() {
+		if (sample == null) {
+			more = false;
+			return;
+		}
+		currentSequence = sample.readSequence();
 		more = (currentSequence != null && currentSequence.length() != 0);
 		if (more) {
 			len = currentSequence.length();
@@ -59,7 +71,7 @@ public class EncodedKmerGenerator {
 		shift();
 		updateChar(currentChar);
 		if (currentIndex == len) {
-			getNewSequence();
+			readNewSequence();
 		}
 		return Kmer.unify(f, r);
 	}

@@ -16,20 +16,22 @@ public class Signature {
 	private int size;
 	private long[] data;
 	private int ksize;
+	private int cutoff;
 	
-	private Signature(int ksize, int size, long[] data) {
+	private Signature(int ksize, int size,  int cutoff, long[] data) {
+		this.cutoff = cutoff;
 		this.size = size;
 		this.count = 0;
 		this.data = data;
 		this.ksize = ksize;
 	}
 	
-	public Signature(int ksize, int size) {
-		this(ksize, size, new long[size]);
+	public Signature(int ksize, int size, int cutoff) {
+		this(ksize, size, cutoff, new long[size]);
 	}
 	
 	public Signature(int size) {
-		this(0, size);
+		this(0, size, 0);
 	}
 	
 	public synchronized void add(long hash) {
@@ -89,7 +91,7 @@ public class Signature {
 	}
 	
 	public Signature combine(Signature other) {
-		Signature combined = new Signature(ksize, size, data);
+		Signature combined = new Signature(ksize, size, cutoff, data);
 		combined.addAll(other);
 		return combined;
 	}
@@ -99,8 +101,9 @@ public class Signature {
 		contents.put("version", "0.1");
 		Map<String, Object> signature = new HashMap<String, Object>();
 		signature.put("ksize", new Integer(ksize));
-		signature.put("hashes", data);
+		signature.put("cutoff", cutoff);
 		signature.put("num", new Integer(size));
+		signature.put("hashes", data);
 		contents.put("signature", signature);
 		FileWriter infoWriter = new FileWriter(file);
 		Yaml yaml = new Yaml();
@@ -114,13 +117,14 @@ public class Signature {
 		Map<String, Object> signature = (Map<String, Object>) contents.get("signature");
 		int ksize = ((Integer) signature.get("ksize")).intValue();
 		int size = ((Integer) signature.get("num")).intValue();
+		int cutoff = ((Integer) signature.get("cutoff")).intValue();
 		String hashArray = signature.get("hashes").toString();
 		String[] tokens = hashArray.substring(1, hashArray.length() - 1).split("\\s*,\\s*");
 		long[] hashes = new long[size];
 		for (int i = 0; i < size; i++) {
 			hashes[i] = Long.parseLong(tokens[i]);
 		}
-		return new Signature(ksize, size, hashes);
+		return new Signature(ksize, size, cutoff, hashes);
 	}
 
 }

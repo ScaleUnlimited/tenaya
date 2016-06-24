@@ -4,27 +4,27 @@ import java.util.Iterator;
 
 public class KmerGenerator implements Iterator<String> {
 	
-	private SampleReader reader;
+	private Sample sample;
 	private boolean more;
 	private String currentSequence;
 	private int ksize;
 	private int currentIndex;
 	private int len;
 	
-	public KmerGenerator(int ksize, SampleReader sampleReader) {
-		reader = sampleReader;
+	public KmerGenerator(int ksize, Sample sample) {
 		this.ksize = ksize;
 		
+		setSample(sample);		
+	}
+	
+	public void setSample(Sample sample) {
+		this.sample = sample;
 		more = true;
-		currentSequence = sampleReader.readSequence();
+		currentSequence = sample.readSequence();
 		currentIndex = 0;
 		len = currentSequence.length();
 	}
 	
-	public KmerGenerator(int ksize, String[] reads) {
-		
-	}
-
 	@Override
 	public boolean hasNext() {
 		return more;
@@ -34,7 +34,7 @@ public class KmerGenerator implements Iterator<String> {
 	public String next() {
 		String kmer = currentSequence.substring(currentIndex++, currentIndex + ksize - 1);
 		if ((currentIndex + ksize) > len) {
-			currentSequence = reader.readSequence();
+			currentSequence = sample.readSequence();
 			if (currentSequence == null) {
 				more = false;
 			} else {

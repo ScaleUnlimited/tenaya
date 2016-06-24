@@ -1,11 +1,11 @@
 package com.scaleunlimited.tenaya.data;
 
-public class StringSampleReader implements SampleReader {
+public class StringSample implements Sample {
 	
 	private String sequence;
 	private boolean done;
 	
-	public StringSampleReader(String seq) {
+	public StringSample(String seq) {
 		sequence = seq;
 		done = false;
 	}
@@ -18,6 +18,11 @@ public class StringSampleReader implements SampleReader {
 			done = true;
 			return sequence;
 		}
+	}
+
+	@Override
+	public String getIdentifier() {
+		return "String Sample [" + toString() + "]";
 	}
 	
 	
