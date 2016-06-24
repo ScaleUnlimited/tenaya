@@ -35,6 +35,9 @@ public class SignatureGenerationToolOptions {
 	@Option(name="-f", usage="Regex that captures the unique part of the identifier which determines sample boundaries", required=false, aliases="--filter")
 	private String filter = "sra";
 	
+	@Option(name="--gzip", usage="Input file is gzipped", required=false)
+	private boolean gzip = false;
+	
 	public File getInputFile() {
 		return input;
 	}
@@ -73,6 +76,10 @@ public class SignatureGenerationToolOptions {
 	
 	public String getFilter() {
 		return filter;
+	}
+	
+	public boolean getGzip() {
+		return gzip;
 	}
 
 }

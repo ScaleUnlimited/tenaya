@@ -3,9 +3,11 @@ package com.scaleunlimited.tenaya.data;
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.zip.GZIPInputStream;
 
 public class FileSampleReader implements SampleReader, Closeable {
 
@@ -16,19 +18,30 @@ public class FileSampleReader implements SampleReader, Closeable {
 	
 	private String identifier;
 	
-	private FileReader fileReader;
+	private FileInputStream fileInputStream;
+	private Reader decoder;
 	private BufferedReader bufferedReader;
 	private Parser parser;
 	
 	public FileSampleReader(File file, FileFormat format) {
-		this(file, format, 10 * 1024 * 1024, "");
+		this(file, format, false);
 	}
 	
-	public FileSampleReader(File file, FileFormat format, int bufferSize, String regex) {
+	public FileSampleReader(File file, FileFormat format, boolean gzip) {
+		this(file, format, 10 * 1024 * 1024, "", gzip);
+	}
+	
+	public FileSampleReader(File file, FileFormat format, int bufferSize, String regex, boolean gzip) {
 		try {
-			fileReader = new FileReader(file);
-			bufferedReader = new BufferedReader(fileReader, bufferSize);
-		} catch (FileNotFoundException e) {
+			fileInputStream = new FileInputStream(file);
+			if (gzip) {
+				GZIPInputStream gzipInputStream = new GZIPInputStream(fileInputStream);
+				decoder = new InputStreamReader(gzipInputStream);
+			} else {
+				decoder = new InputStreamReader(fileInputStream);
+			}
+			bufferedReader = new BufferedReader(decoder, bufferSize);
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		

@@ -44,7 +44,7 @@ public class SignatureGenerationTool {
 	}
 	
 	private static FileFormat getFileFormat(File file) {
-		return file.toPath().toString().toLowerCase().endsWith(".fasta") ? FileFormat.FASTA : FileFormat.FASTQ;
+		return (file.toPath().toString().toLowerCase().indexOf(".fasta") != -1) ? FileFormat.FASTA : FileFormat.FASTQ;
 	}
 	
 	public static void generateSignatures(SignatureGenerationToolOptions options) throws IOException, InterruptedException {
@@ -54,9 +54,15 @@ public class SignatureGenerationTool {
 		int cutoff = options.getCutoff();
 		int queueSize = 800;
 		
+		FileFormat format = getFileFormat(source);
+		boolean gzip = options.getGzip();
+		if (!gzip && source.toPath().toString().endsWith(".gz")) {
+			gzip = true;
+		}
+		
 		System.out.println("Generating from " + source.toPath());
 		
-		FileSampleReader reader = new FileSampleReader(source, getFileFormat(source), options.getBufferSize(), options.getFilter().equals("sra") ? "(SRR[0-9]{6})" : "");
+		FileSampleReader reader = new FileSampleReader(source, format, options.getBufferSize(), options.getFilter().equals("sra") ? "(SRR[0-9]{6})" : "", gzip);
 		BlockingQueue<Runnable> linkedBlockingDeque = new LinkedBlockingDeque<Runnable>(queueSize);
 		ChunkedCountMinSketch sketch = new ChunkedCountMinSketch(options.getDepth(), options.getMaxMemory() / options.getDepth(), options.getChunks());
 		
