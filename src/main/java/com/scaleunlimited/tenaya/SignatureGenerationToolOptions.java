@@ -17,9 +17,6 @@ public class SignatureGenerationToolOptions {
 	@Option(name="-M", usage="Maximum memory in bytes for the Count-Min Sketch", required=false, aliases="--max-memory")
 	private int maxMemory = 1000000000;
 	
-	@Option(name="-D", usage="Is the input data DNA", required=false, aliases="--dna")
-	private boolean dna = false;
-	
 	@Option(name="-c", usage="Cutoff count for filtering k-mers", required=false, aliases="--cutoff")
 	private int cutoff = 1;
 	
@@ -49,10 +46,6 @@ public class SignatureGenerationToolOptions {
 	
 	public int getMaxMemory() {
 		return maxMemory;
-	}
-	
-	public boolean getDna() {
-		return dna;
 	}
 	
 	public int getCutoff() {

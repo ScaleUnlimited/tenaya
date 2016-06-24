@@ -17,7 +17,6 @@ public class ChunkedCountMinSketch implements KmerCounter {
 	private int[] rowSizes;
 	private int occupants;
 	private int size;
-	private boolean dna;
 	
 	private final ThreadLocal<int[][]> indices = new ThreadLocal<int[][]>() {
 
@@ -29,10 +28,10 @@ public class ChunkedCountMinSketch implements KmerCounter {
 	};
 	
 	public ChunkedCountMinSketch(int rows, int cols) {
-		this(rows, cols, 1, false);
+		this(rows, cols, 1);
 	}
 	
-	public ChunkedCountMinSketch(int rows, int cols, int chunks, boolean dna) {
+	public ChunkedCountMinSketch(int rows, int cols, int chunks) {
 		this.rows = rows;
 		this.rowSizes = generatePrimesAround(cols, rows);
 		this.size = 0;
@@ -43,7 +42,6 @@ public class ChunkedCountMinSketch implements KmerCounter {
 		this.chunkSize = (size / chunks) + 1;
 		this.occupants = 0;
 		this.data = new byte[chunks][chunkSize];
-		this.dna = dna;
 	}
 	
 	public static int[] generatePrimesAround(int target, int multiplicity) {
@@ -82,7 +80,7 @@ public class ChunkedCountMinSketch implements KmerCounter {
 	}
 	
 	public int addKmer(String kmer, int ksize) {
-		return addKmer(Kmer.encode(kmer, ksize, dna), ksize);
+		return addKmer(Kmer.encode(kmer, ksize), ksize);
 	}
 	
 	public int addKmer(long kmer, int ksize) {
@@ -112,7 +110,7 @@ public class ChunkedCountMinSketch implements KmerCounter {
 		return count;
 	}
 	
-	public int count(long hash) {
+	public synchronized int count(long hash) {
 		int count = Integer.MAX_VALUE;
 		int[][] indices = calculateIndices(hash);
 		for (int i = 0; i < rows; i++) {
@@ -131,7 +129,7 @@ public class ChunkedCountMinSketch implements KmerCounter {
 	}
 	
 	public int countKmer(String kmer, int ksize) {
-		return countKmer(Kmer.encode(kmer, ksize, dna), ksize);
+		return countKmer(Kmer.encode(kmer, ksize), ksize);
 	}
 	
 	public double getErrorRate() {

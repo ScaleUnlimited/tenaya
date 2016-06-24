@@ -35,7 +35,7 @@ public class SignatureComparisonTool {
 				}
 			}
 		}
-		DecimalFormat format = new DecimalFormat("##.00%");
+		DecimalFormat format = new DecimalFormat("##.0%");
 		System.out.println("Similarity:");
 		for (int i = 0; i < n; i++) {
 			for (int j = 0; j < n; j++) {

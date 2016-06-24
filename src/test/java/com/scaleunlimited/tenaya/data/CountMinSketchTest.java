@@ -105,7 +105,7 @@ public class CountMinSketchTest {
 	
 	@Test
 	public void testChunkedBasic() {
-		ChunkedCountMinSketch sketch = new ChunkedCountMinSketch(4, 1000000, 1000, false);
+		ChunkedCountMinSketch sketch = new ChunkedCountMinSketch(4, 1000000, 1000);
 		sketch.addKmer(10, 32);
 		assertEquals("Sketch count should be one after addition", 1, sketch.countKmer(10, 32));
 		sketch.addKmer(10, 32);
@@ -118,7 +118,7 @@ public class CountMinSketchTest {
 		final int NUM_KMERS = 100000;
 		final int MAX_COUNT = 5;
 		final CountMinSketch reference = new CountMinSketch(4, 1000000);
-		final ChunkedCountMinSketch chunked = new ChunkedCountMinSketch(4, 1000000, 1000, false);
+		final ChunkedCountMinSketch chunked = new ChunkedCountMinSketch(4, 1000000, 1000);
 		final AtomicBoolean ready = new AtomicBoolean(false);
 		final AtomicInteger threadCounter = new AtomicInteger();
 		long seed = System.nanoTime();

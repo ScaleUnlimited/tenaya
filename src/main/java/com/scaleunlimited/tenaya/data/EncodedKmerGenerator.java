@@ -10,16 +10,10 @@ public class EncodedKmerGenerator {
 	private int len;
 	private long f, r;
 	private long shiftMask;
-	private boolean dna;
 	
 	public EncodedKmerGenerator(int ksize, SampleReader sampleReader) {
-		this(ksize, sampleReader, false);
-	}
-	
-	public EncodedKmerGenerator(int ksize, SampleReader sampleReader, boolean dna) {
 		reader = sampleReader;
 		this.ksize = ksize;
-		this.dna = dna;
 
 		shiftMask = ~(0x0ffffffffffffffffL << (ksize * 2));
 		
@@ -67,11 +61,7 @@ public class EncodedKmerGenerator {
 		if (currentIndex == len) {
 			getNewSequence();
 		}
-		if (dna) {
-			return Kmer.unify(f, r);
-		} else {
-			return f;
-		}
+		return Kmer.unify(f, r);
 	}
 
 }

@@ -51,13 +51,14 @@ public class SignatureGenerationTool {
 		File dest = options.getOutputFile();
 		int ksize = options.getKsize();
 		
+		System.out.println("Generating from " + source.toPath());
 		FileSampleReader reader = new FileSampleReader(source, getFileFormat(source), options.getBufferSize());
 		Signature sig = new Signature(ksize, options.getSignatureSize());
 		BlockingQueue<Runnable> linkedBlockingDeque = new LinkedBlockingDeque<Runnable>(400);
 		ExecutorService executor = new ThreadPoolExecutor(8, 8, 30,
 		    TimeUnit.SECONDS, linkedBlockingDeque,
 		    new ThreadPoolExecutor.CallerRunsPolicy());
-		ChunkedCountMinSketch sketch = new ChunkedCountMinSketch(options.getDepth(), options.getMaxMemory() / options.getDepth(), options.getChunks(), options.getDna());
+		ChunkedCountMinSketch sketch = new ChunkedCountMinSketch(options.getDepth(), options.getMaxMemory() / options.getDepth(), options.getChunks());
 		
 		int cutoff = options.getCutoff();
 		long start = System.currentTimeMillis();
@@ -89,12 +90,14 @@ public class SignatureGenerationTool {
 
 		reader.close();
 	
-		System.out.println("occupancy: " + sketch.getOccupancy());
-		System.out.println("error rate: " + sketch.getErrorRate());
+		System.out.println("Occupancy: " + sketch.getOccupancy());
+		System.out.println("Error Rate: " + sketch.getErrorRate());
 		long diff = System.currentTimeMillis() - start;
-		System.out.println("took around " + TimeUnit.SECONDS.convert(diff, TimeUnit.MILLISECONDS) + "s");
+		System.out.println("Took around " + TimeUnit.SECONDS.convert(diff, TimeUnit.MILLISECONDS) + "s");
 		
 		sig.writeToFile(dest);
+		
+		System.out.println("Wrote signature to " + dest.toPath());
 		
 		sketch = null;
 		System.gc();

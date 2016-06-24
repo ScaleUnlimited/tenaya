@@ -13,22 +13,16 @@ public class CountMinSketch implements KmerCounter {
 	private byte[] data;
 	private int rows, cols;
 	private int occupants;
-	private boolean dna;
 	
 	public CountMinSketch(int rows, int cols) {
-		this(rows, cols, false);
-	}
-	
-	public CountMinSketch(int rows, int cols, boolean dna) {
 		this.rows = rows;
 		this.cols = cols;
 		this.occupants = 0;
 		this.data = new byte[rows * cols];
-		this.dna = dna;
 	}
 	
 	public int addKmer(String kmer, int ksize) {
-		return addKmer(Kmer.encode(kmer, ksize, dna), ksize);
+		return addKmer(Kmer.encode(kmer, ksize), ksize);
 	}
 	
 	public int addKmer(long kmer, int ksize) {
@@ -73,7 +67,7 @@ public class CountMinSketch implements KmerCounter {
 	}
 	
 	public int countKmer(String kmer, int ksize) {
-		return countKmer(Kmer.encode(kmer, ksize, dna), ksize);
+		return countKmer(Kmer.encode(kmer, ksize), ksize);
 	}
 	
 	public double getErrorRate() {
