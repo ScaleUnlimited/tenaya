@@ -34,7 +34,7 @@ public class Signature {
 		this(0, size, 0);
 	}
 	
-	public synchronized void add(long hash) {
+	public void add(long hash) {
 		if (count < size) {
 			for (int i = 0; i < count; i++) {
 				if (data[i] == hash) {

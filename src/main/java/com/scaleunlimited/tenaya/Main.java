@@ -7,7 +7,7 @@ public class Main {
 	public static void main(String[] args) {
 		if (args.length > 0) {
 			String action = args[0].toLowerCase();
-			String[] modifiedArgs = Arrays.copyOfRange(args, 1, args.length - 1);
+			String[] modifiedArgs = Arrays.copyOfRange(args, 1, args.length);
 			if (action.equals("compare")) {
 				SignatureComparisonTool.main(modifiedArgs);
 			} else if (action.equals("generate")) {

@@ -18,6 +18,9 @@ import com.scaleunlimited.tenaya.data.ChunkedCountMinSketch;
 import com.scaleunlimited.tenaya.data.FileSampleReader;
 
 public class SignatureGenerationTool {
+	
+	public static final String HEADER_FORMAT_STRING = "%15s%15s%12s%n";
+	public static final String LINE_FORMAT_STRING = "%,15d%,15d%,10dms%n";
 
 	public static void main(String[] args) {
 		SignatureGenerationToolOptions options = new SignatureGenerationToolOptions();
@@ -67,23 +70,28 @@ public class SignatureGenerationTool {
 		FileSampleReader reader = new FileSampleReader(source, format, options.getBufferSize(), options.getFilter().equals("sra") ? "(SRR[0-9]{6})" : "", gzip);
 		BlockingQueue<Runnable> linkedBlockingDeque = new LinkedBlockingDeque<Runnable>(queueSize);
 		ChunkedCountMinSketch sketch = new ChunkedCountMinSketch(options.getDepth(), options.getMaxMemory() / options.getDepth(), options.getChunks());
+		ExecutorService executor = new ThreadPoolExecutor(threadCount, threadCount, 30,
+			    TimeUnit.SECONDS, linkedBlockingDeque,
+			    new ThreadPoolExecutor.CallerRunsPolicy());
 		
 		Signature sig;
 		String line;
-		ExecutorService executor;
+		long start, i, diff;
+		long totalTime = 0;
+		double maxErrorRate = 0;
 		
 		Sample sample = reader.readSample();
 		while (sample != null) {
 			System.out.println("Reading sample " + sample.getIdentifier());
+			System.out.println();
 			
-			long start = System.currentTimeMillis();
-			long i = 0;
+			System.out.format(HEADER_FORMAT_STRING, "Unique", "Total", "Time");
+			
+			start = System.currentTimeMillis();
+			i = 0;
 			
 			sketch.reset();
 			
-			executor = new ThreadPoolExecutor(threadCount, threadCount, 30,
-			    TimeUnit.SECONDS, linkedBlockingDeque,
-			    new ThreadPoolExecutor.CallerRunsPolicy());
 			sig = new Signature(ksize, options.getSignatureSize(), cutoff);
 			
 			line = sample.readSequence();
@@ -95,30 +103,47 @@ public class SignatureGenerationTool {
 				}
 				executor.submit(process);
 				if (i % 10000000 < line.length()) {
-					System.out.println(sketch.getOccupancy() + "\t" + i + "\t" + (System.currentTimeMillis() - start) + "ms");
+					diff = System.currentTimeMillis() - start;
+					System.out.format(LINE_FORMAT_STRING, sketch.getOccupancy(), i, diff);
 				}
 				i += line.length();
 				line = sample.readSequence();
 			}
 			
-			executor.shutdown();
-			while (!executor.isTerminated()) {
+			while (linkedBlockingDeque.size() != 0) {
 				Thread.sleep(100);
 			}
 			
-			File sigFile = new File(dest.toPath().toString().replace(".sig", "." + sample.getIdentifier() + ".sig"));
+			System.out.println();
+			
+			File sigFile = new File(dest.toPath().toString().replace("#id", sample.getIdentifier()));
 			
 			sig.writeToFile(sigFile);
 			
 			System.out.println("Wrote signature to " + sigFile.toPath());
 			
 			System.out.println("Occupancy: " + sketch.getOccupancy());
-			System.out.println("Error Rate: " + sketch.getErrorRate());
-			long diff = System.currentTimeMillis() - start;
+			
+			double errorRate = sketch.getErrorRate();
+			System.out.println("Error Rate: " + errorRate);
+			if (errorRate > maxErrorRate) {
+				maxErrorRate = errorRate;
+			}
+			
+			diff = System.currentTimeMillis() - start;
 			System.out.println("Took around " + TimeUnit.SECONDS.convert(diff, TimeUnit.MILLISECONDS) + "s");
+			totalTime += diff;
 			
 			sample = reader.readSample();
 		}
+		
+		executor.shutdown();
+		while (!executor.isTerminated()) {
+			Thread.sleep(100);
+		}
+		
+		System.out.println("Max Error Rate: " + maxErrorRate);
+		System.out.println("Took around " + TimeUnit.SECONDS.convert(totalTime, TimeUnit.MILLISECONDS) + "s");
 
 		reader.close();
 		
