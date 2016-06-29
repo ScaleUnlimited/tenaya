@@ -14,6 +14,7 @@ import org.kohsuke.args4j.CmdLineParser;
 import com.scaleunlimited.tenaya.data.FileSampleReader.FileFormat;
 import com.scaleunlimited.tenaya.data.Sample;
 import com.scaleunlimited.tenaya.data.Signature;
+import com.scaleunlimited.tenaya.metadata.ExperimentMetadata;
 import com.scaleunlimited.tenaya.data.ChunkedCountMinSketch;
 import com.scaleunlimited.tenaya.data.FileSampleReader;
 
@@ -50,7 +51,7 @@ public class SignatureGenerationTool {
 		return (file.toPath().toString().toLowerCase().indexOf(".fasta") != -1) ? FileFormat.FASTA : FileFormat.FASTQ;
 	}
 	
-	public static void generateSignatures(SignatureGenerationToolOptions options) throws IOException, InterruptedException {
+	public static void generateSignatures(SignatureGenerationToolOptions options) throws Exception {
 		File source = options.getInputFile();
 		File dest = options.getOutputFile();
 		int ksize = options.getKsize();
@@ -67,7 +68,7 @@ public class SignatureGenerationTool {
 		
 		System.out.println("Generating from " + source.toPath());
 		
-		FileSampleReader reader = new FileSampleReader(source, format, options.getBufferSize(), options.getFilter().equals("sra") ? "([SE]RR[0-9]{6})" : "", gzip);
+		FileSampleReader reader = new FileSampleReader(source, format, options.getBufferSize(), options.getFilter().equals("sra") ? ExperimentMetadata.SRA_IDENTIFIER_REGEX : "", gzip);
 		BlockingQueue<Runnable> linkedBlockingDeque = new LinkedBlockingDeque<Runnable>(queueSize);
 		ChunkedCountMinSketch sketch = new ChunkedCountMinSketch(options.getDepth(), options.getMaxMemory() / options.getDepth(), options.getChunks());
 		ExecutorService executor = new ThreadPoolExecutor(threadCount, threadCount, 30,
@@ -92,7 +93,7 @@ public class SignatureGenerationTool {
 			
 			sketch.reset();
 			
-			sig = new Signature(ksize, options.getSignatureSize(), cutoff);
+			sig = new Signature(ksize, options.getSignatureSize(), cutoff, sample.getIdentifier());
 			
 			line = sample.readSequence();
 			

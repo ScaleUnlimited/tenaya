@@ -4,6 +4,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -16,6 +18,9 @@ import org.apache.http.util.EntityUtils;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.io.SAXReader;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
 public class XmlHttpReader {
@@ -24,6 +29,7 @@ public class XmlHttpReader {
 	
 	public static Document getDocumentFromUrl(String url) throws Exception {
 		if (httpClient == null) {
+			Logger.getLogger("org.apache.http").setLevel(Level.OFF);
 			httpClient = HttpClients.createDefault();
 		}
 		HttpGet searchUrl = new HttpGet(url);
@@ -34,7 +40,7 @@ public class XmlHttpReader {
 		SAXParser parser = factory.newSAXParser();
 		XMLReader xmlReader = parser.getXMLReader();
 		
-		SAXReader reader = new SAXReader(xmlReader);
+		SAXReader reader = new SAXReader(xmlReader, false);
 		Document document = reader.read(inputStream);
 		return document;
 	}

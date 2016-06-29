@@ -16,6 +16,8 @@ public class Main {
 				DataFetchTool.main(modifiedArgs);
 			} else if (action.equals("search")) {
 				DataSearchTool.main(modifiedArgs);
+			} else if (action.equals("cluster")) {
+				SignatureClusterTool.main(modifiedArgs);
 			} else {
 				System.err.println("Tool failed: unknown action '" + action + "'");
 			}

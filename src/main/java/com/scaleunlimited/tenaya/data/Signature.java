@@ -7,8 +7,12 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.yaml.snakeyaml.Yaml;
+
+import com.scaleunlimited.tenaya.metadata.ExperimentMetadata;
 
 public class Signature {
 	
@@ -17,21 +21,23 @@ public class Signature {
 	private long[] data;
 	private int ksize;
 	private int cutoff;
+	private String identifier;
 	
-	private Signature(int ksize, int size,  int cutoff, long[] data) {
+	private Signature(int ksize, int size,  int cutoff, long[] data, String identifier) {
 		this.cutoff = cutoff;
 		this.size = size;
 		this.count = 0;
 		this.data = data;
 		this.ksize = ksize;
+		this.identifier = identifier;
 	}
 	
-	public Signature(int ksize, int size, int cutoff) {
-		this(ksize, size, cutoff, new long[size]);
+	public Signature(int ksize, int size, int cutoff, String identifier) {
+		this(ksize, size, cutoff, new long[size], identifier);
 	}
 	
 	public Signature(int size) {
-		this(0, size, 0);
+		this(0, size, 0, "");
 	}
 	
 	public void add(long hash) {
@@ -90,15 +96,30 @@ public class Signature {
 		}
 	}
 	
+	public String getIdentifier() {
+		return identifier;
+	}
+	
 	public Signature combine(Signature other) {
-		Signature combined = new Signature(ksize, size, cutoff, data);
+		Signature combined = new Signature(ksize, size, cutoff, data, identifier + "+" + other.getIdentifier());
 		combined.addAll(other);
 		return combined;
 	}
 	
-	public void writeToFile(File file) throws IOException {
+	public void writeToFile(File file) throws Exception {
 		Map<String, Object> contents = new HashMap<String, Object>();
 		contents.put("version", "0.1");
+		contents.put("identifier", identifier);
+		
+		Pattern pattern = Pattern.compile(ExperimentMetadata.SRA_IDENTIFIER_REGEX);
+		Matcher matcher = pattern.matcher(identifier);
+		matcher.find();
+		if (matcher.groupCount() > 0) {
+			ExperimentMetadata exp = ExperimentMetadata.createFromAccession(matcher.group(0));
+			contents.put("scientificName", exp.getScientificName());
+			contents.put("title", exp.getTitle());
+		}
+		
 		Map<String, Object> signature = new HashMap<String, Object>();
 		signature.put("ksize", new Integer(ksize));
 		signature.put("cutoff", cutoff);
@@ -114,6 +135,7 @@ public class Signature {
 	public static Signature createFromFile(File file) throws IOException {
 		Yaml yaml = new Yaml();
 		Map<String, Object> contents = (Map<String, Object>) yaml.load(new FileReader(file));
+		String identifier = (String) contents.get("identifier");
 		Map<String, Object> signature = (Map<String, Object>) contents.get("signature");
 		int ksize = ((Integer) signature.get("ksize")).intValue();
 		int size = ((Integer) signature.get("num")).intValue();
@@ -124,7 +146,7 @@ public class Signature {
 		for (int i = 0; i < size; i++) {
 			hashes[i] = Long.parseLong(tokens[i]);
 		}
-		return new Signature(ksize, size, cutoff, hashes);
+		return new Signature(ksize, size, cutoff, hashes, identifier);
 	}
 
 }
