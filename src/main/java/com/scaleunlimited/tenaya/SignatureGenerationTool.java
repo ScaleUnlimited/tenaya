@@ -67,7 +67,7 @@ public class SignatureGenerationTool {
 		
 		System.out.println("Generating from " + source.toPath());
 		
-		FileSampleReader reader = new FileSampleReader(source, format, options.getBufferSize(), options.getFilter().equals("sra") ? "(SRR[0-9]{6})" : "", gzip);
+		FileSampleReader reader = new FileSampleReader(source, format, options.getBufferSize(), options.getFilter().equals("sra") ? "([SE]RR[0-9]{6})" : "", gzip);
 		BlockingQueue<Runnable> linkedBlockingDeque = new LinkedBlockingDeque<Runnable>(queueSize);
 		ChunkedCountMinSketch sketch = new ChunkedCountMinSketch(options.getDepth(), options.getMaxMemory() / options.getDepth(), options.getChunks());
 		ExecutorService executor = new ThreadPoolExecutor(threadCount, threadCount, 30,

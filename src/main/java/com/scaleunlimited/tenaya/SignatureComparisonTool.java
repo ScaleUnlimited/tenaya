@@ -7,7 +7,7 @@ import java.text.DecimalFormat;
 import com.scaleunlimited.tenaya.data.Signature;
 
 public class SignatureComparisonTool {
-	
+
 	public static void main(String[] args) {
 		try {
 			compareSignatures(args);
