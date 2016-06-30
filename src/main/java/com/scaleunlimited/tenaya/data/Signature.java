@@ -75,7 +75,7 @@ public class Signature {
 	public double jaccard(Signature other) {
 		long[] otherData = other.get();
 		int i = 0, j = 0, matches = 0;
-		while (i < size && j < size) {
+		while (i < size && j < otherData.length) {
 			if (data[i] < otherData[j]) {
 				i++;
 			} else if (data[i] > otherData[j]) {
@@ -104,6 +104,13 @@ public class Signature {
 		Signature combined = new Signature(ksize, size, cutoff, data, identifier + "+" + other.getIdentifier());
 		combined.addAll(other);
 		return combined;
+	}
+	
+	public void dump() {
+		System.out.println("Signature " + identifier);
+		for (long hash : data) {
+			System.out.println(hash);
+		}
 	}
 	
 	public void writeToFile(File file) throws Exception {

@@ -7,9 +7,9 @@ import java.util.regex.Pattern;
 
 public class FastAParser implements Parser {
 	
-	private String lastLine;
 	private Pattern pattern;
 	private BufferedReader bufferedReader;
+	private String identifier;
 	
 	public FastAParser(BufferedReader reader) {
 		this(reader, ">.*");
@@ -18,33 +18,25 @@ public class FastAParser implements Parser {
 	public FastAParser(BufferedReader reader, String identifierRegex) {
 		bufferedReader = reader;
 		pattern = Pattern.compile(identifierRegex);
-		
-		incrLine();
-	}
-	
-	public void incrLine() {
-		try {
-			lastLine = bufferedReader.readLine();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 	
 	public String readLine() {
-		return lastLine;
+		try {
+			return bufferedReader.readLine();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 	
 	public String readIdentifier() {
-		String line = "";
-		while (true) {
-			line = readLine();
-			if (line == null) {
-				return null;
-			}
+		if (identifier == null) {
+			String line = readLine();
 			if (line.startsWith(">")) {
-				return parseIdentifierLine(line);
+				identifier = parseIdentifierLine(line);
 			}
 		}
+		return identifier;
 	}
 	
 	public String parseIdentifierLine(String line) {
@@ -59,25 +51,25 @@ public class FastAParser implements Parser {
 
 	@Override
 	public String readSequence(String identifier) {
-		String line = "";
-		while (true) {
-			line = readLine();
-			if (line == null) {
-				return null;
-			}
+		String line;
+		String seq = "";
+		boolean sawSeq = false;
+		while ((line = readLine()) != null) {
 			if (line.startsWith(";")) {
+				if (sawSeq) return seq;
 				// pass; we don't care about comments
 			} else if (line.startsWith(">")) {
-				String token = parseIdentifierLine(line);
-				if (!token.equals(identifier)) {
-					return null;
+				this.identifier = parseIdentifierLine(line);
+				if (!this.identifier.equals(identifier)) {
+					break;
 				}
+				if (sawSeq) return seq;
 			} else {
-				incrLine();
-				return line;
+				seq += line;
+				sawSeq = true;
 			}
-			incrLine();
 		}
+		return null;
 	}
 
 	@Override

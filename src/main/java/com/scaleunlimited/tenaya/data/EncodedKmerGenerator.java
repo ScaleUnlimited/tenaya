@@ -34,11 +34,11 @@ public class EncodedKmerGenerator {
 			return;
 		}
 		currentSequence = sample.readSequence();
-		more = (currentSequence != null && currentSequence.length() != 0);
-		if (more) {
-			len = currentSequence.length();
-			prepareNewSequence();
+		if (currentSequence == null || currentSequence.length() == 0) {
+			return;
 		}
+		more = true;
+		prepareNewSequence();
 	}
 	
 	private void prepareNewSequence() {

@@ -10,10 +10,10 @@ public class FastQParser implements Parser {
 	public static final int IDENTIFIER_LINE = 0;
 	public static final int SEQ_LINE = 1;
 	
-	private String lastLine;
 	private Pattern pattern;
 	private BufferedReader bufferedReader;
-	private int count = -1;
+	private String identifier;
+	private int line;
 	
 	public FastQParser(BufferedReader reader) {
 		this(reader, "@.*");
@@ -22,44 +22,34 @@ public class FastQParser implements Parser {
 	public FastQParser(BufferedReader reader, String identifierRegex) {
 		bufferedReader = reader;
 		pattern = Pattern.compile(identifierRegex);
-		
-		incrLine();
+		line = -1;
 	}
 	
 	public String readLine() {
-		return lastLine;
-	}
-	
-	public void incrLine() {
 		try {
-			lastLine = bufferedReader.readLine();
+			line++;
+			return bufferedReader.readLine();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		count++;
-	}
-	
-	public String readLineAndIncr() {
-		String line = lastLine;
-		incrLine();
-		return line;
+		return null;
 	}
 	
 	public int getLineType() {
-		return count % 4;
+		return line % 4;
 	}
 	
 	public String readIdentifier() {
-		String line = "";
-		while (true) {
-			line = readLineAndIncr();
-			if (line == null) {
-				return null;
-			}
-			if (line.startsWith("@")) {
-				return parseIdentifierLine(line);
+		if (identifier == null) {
+			String line;
+			while ((line = readLine()) != null) {
+				if (getLineType() == IDENTIFIER_LINE) {
+					identifier = parseIdentifierLine(line);
+					break;
+				}
 			}
 		}
+		return identifier;
 	}
 	
 	public String parseIdentifierLine(String line) {
@@ -74,21 +64,17 @@ public class FastQParser implements Parser {
 
 	@Override
 	public String readSequence(String identifier) {
-		String line = "";
-		while (true) {
-			line = readLine();
-			if (line == null) break;
+		String line;
+		while ((line = readLine()) != null) {
 			int lineType = getLineType();
 			switch (lineType) {
 			case IDENTIFIER_LINE:
-				String identifierToken = parseIdentifierLine(line);
-				if (!identifierToken.equals(identifier)) {
+				this.identifier = parseIdentifierLine(line);
+				if (!this.identifier.equals(identifier)) {
 					return null;
 				}
-				incrLine();
 				break;
 			case SEQ_LINE:
-				incrLine();
 				return line;
 			}
 		}

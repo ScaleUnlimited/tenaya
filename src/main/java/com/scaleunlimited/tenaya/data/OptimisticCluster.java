@@ -5,21 +5,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class Cluster {
-	
-	private Signature clusterSig;
+public class OptimisticCluster extends Cluster {
+
+	private Set<Long> hashes;
 	private List<Signature> signatures;
 	
-	public Cluster() {
+	public OptimisticCluster() {
 		signatures = new ArrayList<Signature>();
+		hashes = new HashSet<Long>();
 	}
 	
 	public void add(Signature sig) {
 		signatures.add(sig);
-		if (clusterSig == null) {
-			clusterSig = new Signature(sig.getSize());
+		for (Long hash : sig.get()) {
+			hashes.add(hash);
 		}
-		clusterSig.addAll(sig);
 	}
 	
 	public List<Signature> getSignatures() {
@@ -27,7 +27,11 @@ public class Cluster {
 	}
 	
 	public double similarity(Signature sig) {
-		return sig.jaccard(clusterSig);
+		Signature cluster = new Signature(hashes.size());
+		for (Long hash : hashes) {
+			cluster.add(hash);
+		}
+		return sig.jaccard(cluster);
 	}
 
 }

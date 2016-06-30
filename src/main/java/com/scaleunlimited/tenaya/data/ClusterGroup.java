@@ -5,54 +5,55 @@ import java.util.List;
 
 public class ClusterGroup {
 	
-	public static final double CLUSTER_THRESHOLD = 0.8;
-	
 	private List<Signature> signatures;
 	private List<Cluster> clusters;
+	private double threshold;
 	
-	public ClusterGroup() {
+	public ClusterGroup(double threshold) {
 		signatures = new ArrayList<Signature>();
 		clusters = new ArrayList<Cluster>();
+		this.threshold = threshold;
 	}
 	
 	public void addSignature(Signature sig) {
 		signatures.add(sig);
 	}
 	
-	public void cluster() {
+	public List<Cluster> cluster() {
 		for (Signature sig : signatures) {
 			System.out.println("Processing " + sig.getIdentifier());
 			if (clusters.size() == 0) {
-				Cluster first = new Cluster();
+				Cluster first = new OptimisticCluster();
 				first.add(sig);
 				clusters.add(first);
 				continue;
 			}
 			List<Cluster> close = new ArrayList<Cluster>();
 			Cluster closest = null;
-			double closestDist = 1.0;
+			double closestSim = 0.0;
 			for (Cluster cluster : clusters) {
-				double dist = cluster.distance(sig);
-				if (dist < CLUSTER_THRESHOLD) {
+				double sim = cluster.similarity(sig);
+				if (sim >= threshold) {
 					close.add(cluster);
-					if (dist < closestDist) {
-						closestDist = dist;
-						closest = cluster;
-					}
+				}
+				if (sim > closestSim) {
+					closestSim = sim;
+					closest = cluster;
 				}
 			}
+			System.out.println("Best similarity: " + closestSim);
 			int numClusters = close.size();
 			if (numClusters == 0) {
-				//System.out.println("Too different");
-				Cluster another = new Cluster();
+				System.out.println("Too different");
+				Cluster another = new OptimisticCluster();
 				another.add(sig);
 				clusters.add(another);
 			} else {
 				if (numClusters > 1) {
 					System.out.println("Ignoring the " + numClusters + " clusters within the threshold");
-					//System.out.println("Too similar");
+					System.out.println("Too similar");
 				} else {
-					//System.out.println("Just right");
+					System.out.println("Just right");
 				}
 				closest.add(sig);
 			}
@@ -63,6 +64,7 @@ public class ClusterGroup {
 				System.out.println(s.getIdentifier());
 			}
 		}
+		return clusters;
 	}
 
 }

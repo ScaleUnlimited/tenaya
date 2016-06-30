@@ -53,6 +53,8 @@ public class FileSampleReader implements SampleReader, Closeable {
 			parser = new FastQParser(bufferedReader, regex);
 			break;
 		}	
+		
+		identifier = parser.readIdentifier();
 	}
 	
 	public String getIdentifier() {

@@ -8,6 +8,8 @@ import com.scaleunlimited.tenaya.data.Signature;
 
 public class SignatureClusterTool {
 	
+	public static final double CLUSTER_THRESHOLD = 0.358;
+	
 	public static void main(String[] args) {
 		try {
 			clusterSignatures(args);
@@ -20,7 +22,7 @@ public class SignatureClusterTool {
 
 	public static void clusterSignatures(String[] sigs) throws IOException {
 		int n = sigs.length;
-		ClusterGroup group = new ClusterGroup();
+		ClusterGroup group = new ClusterGroup(CLUSTER_THRESHOLD);
 		for (int i = 0; i < n; i++) {
 			System.out.println("Loading signature " + sigs[i]);
 			group.addSignature(Signature.createFromFile(new File(sigs[i])));

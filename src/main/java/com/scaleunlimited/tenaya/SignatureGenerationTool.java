@@ -99,8 +99,8 @@ public class SignatureGenerationTool {
 			
 			while (line != null) {
 				KmerProcessor process = new KmerProcessor(ksize, line, sketch, sig, cutoff);
-				while (linkedBlockingDeque.size() == queueSize) {
-					Thread.yield();
+				while (linkedBlockingDeque.size() >= queueSize) {
+					Thread.sleep(1);
 				}
 				executor.submit(process);
 				if (i % 10000000 < line.length()) {
