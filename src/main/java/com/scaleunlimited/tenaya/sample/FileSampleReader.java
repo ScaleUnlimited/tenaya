@@ -1,4 +1,4 @@
-package com.scaleunlimited.tenaya.data;
+package com.scaleunlimited.tenaya.sample;
 
 import java.io.BufferedReader;
 import java.io.Closeable;

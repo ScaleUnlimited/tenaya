@@ -11,12 +11,12 @@ import java.util.concurrent.TimeUnit;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 
-import com.scaleunlimited.tenaya.data.FileSampleReader.FileFormat;
-import com.scaleunlimited.tenaya.data.Sample;
 import com.scaleunlimited.tenaya.data.Signature;
 import com.scaleunlimited.tenaya.metadata.ExperimentMetadata;
+import com.scaleunlimited.tenaya.sample.FileSampleReader;
+import com.scaleunlimited.tenaya.sample.Sample;
+import com.scaleunlimited.tenaya.sample.FileSampleReader.FileFormat;
 import com.scaleunlimited.tenaya.data.ChunkedCountMinSketch;
-import com.scaleunlimited.tenaya.data.FileSampleReader;
 
 public class SignatureGenerationTool {
 	

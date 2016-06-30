@@ -1,33 +1,27 @@
-package com.scaleunlimited.tenaya.data;
+package com.scaleunlimited.tenaya.sample;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class FastQParser implements Parser {
-	
-	public static final int IDENTIFIER_LINE = 0;
-	public static final int SEQ_LINE = 1;
+public class FastAParser implements Parser {
 	
 	private Pattern pattern;
 	private BufferedReader bufferedReader;
 	private String identifier;
-	private int line;
 	
-	public FastQParser(BufferedReader reader) {
-		this(reader, "@.*");
+	public FastAParser(BufferedReader reader) {
+		this(reader, ">.*");
 	}
-	
-	public FastQParser(BufferedReader reader, String identifierRegex) {
+
+	public FastAParser(BufferedReader reader, String identifierRegex) {
 		bufferedReader = reader;
 		pattern = Pattern.compile(identifierRegex);
-		line = -1;
 	}
 	
 	public String readLine() {
 		try {
-			line++;
 			return bufferedReader.readLine();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -35,15 +29,11 @@ public class FastQParser implements Parser {
 		return null;
 	}
 	
-	public int getLineType() {
-		return line % 4;
-	}
-	
 	public String readIdentifier() {
 		if (identifier == null) {
 			String line;
 			while ((line = readLine()) != null) {
-				if (getLineType() == IDENTIFIER_LINE) {
+				if (line.startsWith(">")) {
 					identifier = parseIdentifierLine(line);
 					break;
 				}
@@ -65,19 +55,24 @@ public class FastQParser implements Parser {
 	@Override
 	public String readSequence(String identifier) {
 		String line;
+		String seq = "";
+		boolean sawSeq = false;
 		while ((line = readLine()) != null) {
-			int lineType = getLineType();
-			switch (lineType) {
-			case IDENTIFIER_LINE:
+			if (line.startsWith(";")) {
+				if (sawSeq) return seq;
+				// pass; we don't care about comments
+			} else if (line.startsWith(">")) {
 				this.identifier = parseIdentifierLine(line);
 				if (!this.identifier.equals(identifier)) {
 					return null;
 				}
-				break;
-			case SEQ_LINE:
-				return line;
+				if (sawSeq) return seq;
+			} else {
+				seq += line;
+				sawSeq = true;
 			}
 		}
+		this.identifier = null;
 		return null;
 	}
 

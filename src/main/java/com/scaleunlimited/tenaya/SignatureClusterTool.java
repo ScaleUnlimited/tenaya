@@ -3,7 +3,7 @@ package com.scaleunlimited.tenaya;
 import java.io.File;
 import java.io.IOException;
 
-import com.scaleunlimited.tenaya.data.ClusterGroup;
+import com.scaleunlimited.tenaya.cluster.ClusterGroup;
 import com.scaleunlimited.tenaya.data.Signature;
 
 public class SignatureClusterTool {

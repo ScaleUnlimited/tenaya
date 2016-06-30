@@ -1,4 +1,4 @@
-package com.scaleunlimited.tenaya.data;
+package com.scaleunlimited.tenaya.sample;
 
 public class StringSample implements Sample {
 	

@@ -4,6 +4,8 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import com.scaleunlimited.tenaya.cluster.ClusterGroup;
+
 public class ClusterGroupTest {
 
 	@Test

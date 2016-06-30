@@ -1,7 +1,9 @@
-package com.scaleunlimited.tenaya.data;
+package com.scaleunlimited.tenaya.cluster;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import com.scaleunlimited.tenaya.data.Signature;
 
 public class ClusterGroup {
 	

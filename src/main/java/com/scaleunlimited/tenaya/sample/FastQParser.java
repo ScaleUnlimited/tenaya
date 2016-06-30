@@ -1,27 +1,33 @@
-package com.scaleunlimited.tenaya.data;
+package com.scaleunlimited.tenaya.sample;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class FastAParser implements Parser {
+public class FastQParser implements Parser {
+	
+	public static final int IDENTIFIER_LINE = 0;
+	public static final int SEQ_LINE = 1;
 	
 	private Pattern pattern;
 	private BufferedReader bufferedReader;
 	private String identifier;
+	private int line;
 	
-	public FastAParser(BufferedReader reader) {
-		this(reader, ">.*");
+	public FastQParser(BufferedReader reader) {
+		this(reader, "@.*");
 	}
-
-	public FastAParser(BufferedReader reader, String identifierRegex) {
+	
+	public FastQParser(BufferedReader reader, String identifierRegex) {
 		bufferedReader = reader;
 		pattern = Pattern.compile(identifierRegex);
+		line = -1;
 	}
 	
 	public String readLine() {
 		try {
+			line++;
 			return bufferedReader.readLine();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -29,11 +35,18 @@ public class FastAParser implements Parser {
 		return null;
 	}
 	
+	public int getLineType() {
+		return line % 4;
+	}
+	
 	public String readIdentifier() {
 		if (identifier == null) {
-			String line = readLine();
-			if (line.startsWith(">")) {
-				identifier = parseIdentifierLine(line);
+			String line;
+			while ((line = readLine()) != null) {
+				if (getLineType() == IDENTIFIER_LINE) {
+					identifier = parseIdentifierLine(line);
+					break;
+				}
 			}
 		}
 		return identifier;
@@ -52,21 +65,17 @@ public class FastAParser implements Parser {
 	@Override
 	public String readSequence(String identifier) {
 		String line;
-		String seq = "";
-		boolean sawSeq = false;
 		while ((line = readLine()) != null) {
-			if (line.startsWith(";")) {
-				if (sawSeq) return seq;
-				// pass; we don't care about comments
-			} else if (line.startsWith(">")) {
+			int lineType = getLineType();
+			switch (lineType) {
+			case IDENTIFIER_LINE:
 				this.identifier = parseIdentifierLine(line);
 				if (!this.identifier.equals(identifier)) {
-					break;
+					return null;
 				}
-				if (sawSeq) return seq;
-			} else {
-				seq += line;
-				sawSeq = true;
+				break;
+			case SEQ_LINE:
+				return line;
 			}
 		}
 		return null;

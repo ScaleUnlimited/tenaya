@@ -2,6 +2,8 @@ package com.scaleunlimited.tenaya.data;
 
 import java.util.Iterator;
 
+import com.scaleunlimited.tenaya.sample.Sample;
+
 public class KmerGenerator implements Iterator<String> {
 	
 	private Sample sample;

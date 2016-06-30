@@ -1,5 +1,7 @@
 package com.scaleunlimited.tenaya.data;
 
+import com.scaleunlimited.tenaya.sample.Sample;
+
 public class EncodedKmerGenerator {
 
 	private Sample sample;
