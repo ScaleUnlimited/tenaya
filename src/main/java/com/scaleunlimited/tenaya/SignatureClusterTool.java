@@ -8,7 +8,7 @@ import com.scaleunlimited.tenaya.data.Signature;
 
 public class SignatureClusterTool {
 	
-	public static final double CLUSTER_THRESHOLD = 0.358;
+	public static final double CLUSTER_THRESHOLD = 0.2;
 	
 	public static void main(String[] args) {
 		try {
