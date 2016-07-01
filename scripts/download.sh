@@ -59,7 +59,7 @@ for run in "${runs[@]}"; do
 	runpath=$cache/$run.sra;
 	if [ -z "$(echo "$list" | grep $run)" ]; then
 		if [ $log = true ]; then echo "Starting download into $runpath"; fi
-		ascp -i $certpath -k1 -Tr -l200m anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/${run:0:3}/${run:0:6}/${run}/${run}.sra $runpath > "$logs/$run.log" &
+		ascp -i $certpath -k1 -Tr -l200m anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/${run:0:3}/${run:0:6}/${run}/${run}.sra $runpath | grep --line-buffered -P ".*" &> "$logs/$run.log" &
 	else
 		if [ $log = true ]; then echo "Found cached version at $runpath"; fi
 	fi
