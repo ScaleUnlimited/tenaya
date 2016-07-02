@@ -5,11 +5,10 @@ import com.scaleunlimited.tenaya.sample.Sample;
 public class EncodedKmerGenerator {
 
 	private Sample sample;
-	private boolean more;
+	private boolean hasMoreKmers;
 	private String currentSequence;
 	private int ksize;
 	private int currentIndex;
-	private int len;
 	private long f, r;
 	private long shiftMask;
 	
@@ -32,14 +31,14 @@ public class EncodedKmerGenerator {
 	
 	private void readNewSequence() {
 		if (sample == null) {
-			more = false;
+			hasMoreKmers = false;
 			return;
 		}
 		currentSequence = sample.readSequence();
 		if (currentSequence == null || currentSequence.length() == 0) {
 			return;
 		}
-		more = true;
+		hasMoreKmers = true;
 		prepareNewSequence();
 	}
 	
@@ -65,16 +64,16 @@ public class EncodedKmerGenerator {
 	}
 
 	public boolean hasNext() {
-		return more;
+		return hasMoreKmers;
 	}
 	
 	public long next() {
+		if (currentIndex >= currentSequence.length()) {
+			readNewSequence();
+		}
 		char currentChar = currentSequence.charAt(currentIndex++);
 		shift();
 		updateChar(currentChar);
-		if (currentIndex == len) {
-			readNewSequence();
-		}
 		return Kmer.unify(f, r);
 	}
 

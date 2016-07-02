@@ -52,90 +52,100 @@ public class SignatureGenerationTool {
 	}
 	
 	public static void generateSignatures(SignatureGenerationToolOptions options) throws Exception {
-		File source = options.getInputFile();
+		String source = options.getInputFile();
+		String[] sourceNames = source.split(",");
 		File dest = options.getOutputFile();
 		int ksize = options.getKsize();
 		int cutoff = options.getCutoff();
 		
 		int threadCount = options.getThreadCount();
-		int queueSize = threadCount * 100;
+		int queueSize = threadCount * 100;		
 		
-		FileFormat format = getFileFormat(source);
-		boolean gzip = options.getGzip();
-		if (!gzip && source.toPath().toString().endsWith(".gz")) {
-			gzip = true;
-		}
-		
-		System.out.println("Generating from " + source.toPath());
-		
-		FileSampleReader reader = new FileSampleReader(source, format, options.getBufferSize(), options.getFilter().equals("sra") ? ExperimentMetadata.SRA_IDENTIFIER_REGEX : "", gzip);
 		BlockingQueue<Runnable> linkedBlockingDeque = new LinkedBlockingDeque<Runnable>(queueSize);
 		ChunkedCountMinSketch sketch = new ChunkedCountMinSketch(options.getDepth(), options.getMaxMemory() / options.getDepth(), options.getChunks());
 		ExecutorService executor = new ThreadPoolExecutor(threadCount, threadCount, 30,
 			    TimeUnit.SECONDS, linkedBlockingDeque,
 			    new ThreadPoolExecutor.CallerRunsPolicy());
+		FileSampleReader reader;
 		
-		Signature sig;
-		String line;
-		long start, i, diff;
 		long totalTime = 0;
 		double maxErrorRate = 0;
+
+		for (int i = 0; i < sourceNames.length; i++) {
+			File currentSource = new File(sourceNames[i]);
 		
-		Sample sample = reader.readSample();
-		while (sample != null) {
-			System.out.println("Reading sample " + sample.getIdentifier());
-			System.out.println();
+			FileFormat format = getFileFormat(currentSource);
+			boolean gzip = options.getGzip();
+			if (!gzip && currentSource.toPath().toString().endsWith(".gz")) {
+				gzip = true;
+			}
 			
-			System.out.format(HEADER_FORMAT_STRING, "Unique", "Total", "Time");
+			System.out.println("Generating from " + currentSource.toPath());
 			
-			start = System.currentTimeMillis();
-			i = 0;
+			reader = new FileSampleReader(currentSource, format, options.getBufferSize(), options.getFilter().equals("sra") ? ExperimentMetadata.SRA_IDENTIFIER_REGEX : "", gzip);
 			
-			sketch.reset();
+			Signature sig;
+			String line;
+			long start, j, diff;
 			
-			sig = new Signature(ksize, options.getSignatureSize(), cutoff, sample.getIdentifier());
-			
-			line = sample.readSequence();
-			
-			while (line != null) {
-				KmerProcessor process = new KmerProcessor(ksize, line, sketch, sig, cutoff);
-				while (linkedBlockingDeque.size() >= queueSize) {
-					Thread.sleep(1);
-				}
-				executor.submit(process);
-				if (i % 10000000 < line.length()) {
-					diff = System.currentTimeMillis() - start;
-					System.out.format(LINE_FORMAT_STRING, sketch.getOccupancy(), i, diff);
-				}
-				i += line.length();
+			Sample sample = reader.readSample();
+			while (sample != null) {
+				System.out.println("Reading sample " + sample.getIdentifier());
+				System.out.println();
+				
+				System.out.format(HEADER_FORMAT_STRING, "Unique", "Total", "Time");
+				
+				start = System.currentTimeMillis();
+				j = 0;
+				
+				sketch.reset();
+				
+				sig = new Signature(ksize, options.getSignatureSize(), cutoff, sample.getIdentifier());
+				
 				line = sample.readSequence();
+				
+				while (line != null) {
+					KmerProcessor process = new KmerProcessor(ksize, line, sketch, sig, cutoff);
+					while (linkedBlockingDeque.size() >= queueSize) {
+						Thread.yield();
+					}
+					executor.submit(process);
+					if (j % 10000000 < line.length()) {
+						diff = System.currentTimeMillis() - start;
+						System.out.format(LINE_FORMAT_STRING, sketch.getOccupancy(), j, diff);
+					}
+					j += line.length();
+					line = sample.readSequence();
+				}
+				
+				while (linkedBlockingDeque.size() != 0) {
+					Thread.sleep(100);
+				}
+				
+				System.out.println();
+				
+				File sigFile = new File(dest.toPath().toString().replace("#id", sample.getIdentifier()));
+				
+				sig.writeToFile(sigFile);
+				
+				System.out.println("Wrote signature to " + sigFile.toPath());
+				
+				System.out.println("Occupancy: " + sketch.getOccupancy());
+				
+				double errorRate = sketch.getErrorRate();
+				System.out.println("Error Rate: " + errorRate);
+				if (errorRate > maxErrorRate) {
+					maxErrorRate = errorRate;
+				}
+				
+				diff = System.currentTimeMillis() - start;
+				System.out.println("Took around " + TimeUnit.SECONDS.convert(diff, TimeUnit.MILLISECONDS) + "s");
+				totalTime += diff;
+				
+				sample = reader.readSample();
 			}
-			
-			while (linkedBlockingDeque.size() != 0) {
-				Thread.sleep(100);
-			}
-			
-			System.out.println();
-			
-			File sigFile = new File(dest.toPath().toString().replace("#id", sample.getIdentifier()));
-			
-			sig.writeToFile(sigFile);
-			
-			System.out.println("Wrote signature to " + sigFile.toPath());
-			
-			System.out.println("Occupancy: " + sketch.getOccupancy());
-			
-			double errorRate = sketch.getErrorRate();
-			System.out.println("Error Rate: " + errorRate);
-			if (errorRate > maxErrorRate) {
-				maxErrorRate = errorRate;
-			}
-			
-			diff = System.currentTimeMillis() - start;
-			System.out.println("Took around " + TimeUnit.SECONDS.convert(diff, TimeUnit.MILLISECONDS) + "s");
-			totalTime += diff;
-			
-			sample = reader.readSample();
+	
+			reader.close();
 		}
 		
 		executor.shutdown();
@@ -145,8 +155,6 @@ public class SignatureGenerationTool {
 		
 		System.out.println("Max Error Rate: " + maxErrorRate);
 		System.out.println("Took around " + TimeUnit.SECONDS.convert(totalTime, TimeUnit.MILLISECONDS) + "s");
-
-		reader.close();
 		
 		sketch = null;
 		System.gc();

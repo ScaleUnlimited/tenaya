@@ -5,8 +5,8 @@ import org.kohsuke.args4j.Option;
 
 public class SignatureGenerationToolOptions {
 	
-	@Option(name="-i", usage="Input FASTA or FASTQ file", required=true, aliases="--input")
-	private File input;
+	@Option(name="-i", usage="Input FASTA or FASTQ file(s) (separated by commas)", required=true, aliases="--input")
+	private String input;
 	
 	@Option(name="-o", usage="Output signature file", required=true, aliases="--output")
 	private File output;
@@ -15,7 +15,7 @@ public class SignatureGenerationToolOptions {
 	private int ksize = 20;
 	
 	@Option(name="-M", usage="Maximum memory in bytes for the Count-Min Sketch", required=false, aliases="--max-memory")
-	private int maxMemory = 1000000000;
+	private long maxMemory = 1000000000;
 	
 	@Option(name="-c", usage="Cutoff count for filtering k-mers", required=false, aliases="--cutoff")
 	private int cutoff = 1;
@@ -41,7 +41,7 @@ public class SignatureGenerationToolOptions {
 	@Option(name="--gzip", usage="Input file is gzipped", required=false)
 	private boolean gzip = false;
 	
-	public File getInputFile() {
+	public String getInputFile() {
 		return input;
 	}
 	
@@ -53,7 +53,7 @@ public class SignatureGenerationToolOptions {
 		return ksize;
 	}
 	
-	public int getMaxMemory() {
+	public long getMaxMemory() {
 		return maxMemory;
 	}
 	

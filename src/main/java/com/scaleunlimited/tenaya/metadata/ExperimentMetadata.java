@@ -11,7 +11,7 @@ import org.xml.sax.InputSource;
 
 public class ExperimentMetadata {
 	
-	public static final String SRA_IDENTIFIER_REGEX = "([SE]R[RX][0-9]{6,})";
+	public static final String SRA_IDENTIFIER_REGEX = "([SED]R[RX][0-9]{6,})";
 	
 	public static final String ENTREZ_SEARCH_URL = "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi";
 	public static final String ENTREZ_SUMMARY_URL = "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi";
