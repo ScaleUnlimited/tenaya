@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -16,7 +17,13 @@ import com.scaleunlimited.tenaya.metadata.ExperimentMetadata;
 import com.scaleunlimited.tenaya.sample.FileSampleReader;
 import com.scaleunlimited.tenaya.sample.Sample;
 import com.scaleunlimited.tenaya.sample.FileSampleReader.FileFormat;
+import com.scaleunlimited.tenaya.sample.FileSampleReader.FileOptions;
 import com.scaleunlimited.tenaya.data.ChunkedCountMinSketch;
+import com.scaleunlimited.tenaya.data.CountMinSketch;
+import com.scaleunlimited.tenaya.data.EncodedKmerGenerator;
+import com.scaleunlimited.tenaya.data.Kmer;
+import com.scaleunlimited.tenaya.data.KmerCounter;
+import com.scaleunlimited.tenaya.data.LongQueue;
 
 public class SignatureGenerationTool {
 	
@@ -34,7 +41,14 @@ public class SignatureGenerationTool {
 			printUsageAndExit(cmdParser);
 		}
 		try {
-			generateSignatures(options);
+			String method = options.getMethod().toLowerCase();
+			if (method.equals("partition")) {
+				generateSignaturesPartitioned(options);
+			} else if (method.equals("simple")) {
+				generateSignatures(options);
+			} else {
+				throw new IllegalArgumentException("Unknown method type: " + method);
+			}
 		} catch (Throwable t) {
 			System.err.println("Tool failed: " + t.getMessage());
 			t.printStackTrace();
@@ -47,19 +61,135 @@ public class SignatureGenerationTool {
 		System.exit(-1);
 	}
 	
-	private static FileFormat getFileFormat(File file) {
-		return (file.toPath().toString().toLowerCase().indexOf(".fasta") != -1) ? FileFormat.FASTA : FileFormat.FASTQ;
-	}
-	
-	public static void generateSignatures(SignatureGenerationToolOptions options) throws Exception {
-		String source = options.getInputFile();
-		String[] sourceNames = source.split(",");
+	public static void generateSignaturesPartitioned(SignatureGenerationToolOptions options) throws Exception {
+		File[] sources = options.getInputFiles();
 		File dest = options.getOutputFile();
 		int ksize = options.getKsize();
 		int cutoff = options.getCutoff();
 		
+		String identifierRegex = options.getFilter().equals("sra") ? ExperimentMetadata.SRA_IDENTIFIER_REGEX : "";
+		
+		int bufferSize = options.getBufferSize();
 		int threadCount = options.getThreadCount();
-		int queueSize = threadCount * 100;		
+		int queueSize = options.getQueueSize();
+		if (queueSize == 0) {
+			queueSize = 100;
+		}
+		
+		long maxMemory = options.getMaxMemory();
+		int memoryPerThread = (int) (maxMemory / threadCount);
+		int depth = options.getDepth();
+		int width = memoryPerThread / depth;
+		
+		PartitionProcessor[] threads = new PartitionProcessor[threadCount];
+		for (int i = 0; i < threadCount; i++) {
+			LongQueue queue = new LongQueue(queueSize);
+			Signature sig = new Signature(ksize, options.getSignatureSize(), cutoff, "");
+			KmerCounter counter = new CountMinSketch(depth, width);
+			threads[i] = new PartitionProcessor(queue, sig, counter);
+			threads[i].start();
+		}
+		
+		long totalTime = 0;
+		
+		for (File source : sources) {
+			System.out.println("Reading from file " + source.getName());
+			
+			FileSampleReader reader = new FileSampleReader(source, FileOptions.inferFromFilename(source), bufferSize, identifierRegex);
+			
+			Sample sample;
+			while ((sample = reader.readSample()) != null) {
+				System.out.println("Reading sample " + sample.getIdentifier());
+				
+				System.out.println();
+				
+				System.out.println("Total");
+				
+				long start = System.currentTimeMillis();
+				long kmers = 0;
+				
+				EncodedKmerGenerator generator = new EncodedKmerGenerator(ksize, sample);
+				while (generator.hasNext()) {
+					long encodedKmer = generator.next();
+					int threadId = (int) ((Kmer.UNSIGNED_INT_MASK & encodedKmer) % threadCount);
+					LongQueue queue = threads[threadId].getQueue();
+					while (queue.isFull()) {
+						Thread.yield();
+					}
+					queue.add(encodedKmer);
+					if (kmers % 10000000 == 0) {
+						System.out.println(kmers + " (" + (System.currentTimeMillis() - start) + " ms)");
+					}
+					kmers++;
+				}
+			
+				boolean allEmpty = false;
+				while (!allEmpty) {
+					Thread.sleep(100);
+					allEmpty = true;
+					for (int i = 0; i < threadCount; i++) {
+						allEmpty = (threads[i].getQueue().isEmpty() && allEmpty);
+					}
+				}
+				
+				double meanError = 0.0;
+				long occupancy = 0;
+				
+				Signature all = new Signature(ksize, options.getSignatureSize(), cutoff, sample.getIdentifier());
+				for (int i = 0; i < threadCount; i++) {
+					all.addAll(threads[i].getSignature());
+				
+					CountMinSketch sketch = ((CountMinSketch) threads[i].getKmerCounter());
+					meanError += sketch.getErrorRate();
+					occupancy += sketch.getOccupancy();
+					
+					threads[i].reset();
+				}
+				
+				meanError /= threadCount;
+				
+				File sigFile = new File(dest.toPath().toString().replace("#id", sample.getIdentifier()));
+				
+				all.writeToFile(sigFile);
+				
+				System.out.println();
+				
+				System.out.println("Wrote signature to " + sigFile.toPath());
+				
+				System.out.println("Mean error rate: " + meanError);
+				
+				System.out.println("Occupancy: " + occupancy);
+				
+				long diff = System.currentTimeMillis() - start;
+				
+				System.out.println("Execution time: " + diff + " ms");
+				
+				totalTime += diff;
+				
+				System.out.println();
+			}
+			
+			reader.close();
+			
+			System.out.println("Total time: " + totalTime + " ms");
+			
+		}
+			
+	}
+	
+	public static void generateSignatures(SignatureGenerationToolOptions options) throws Exception {
+		File[] sources = options.getInputFiles();
+		File dest = options.getOutputFile();
+		int ksize = options.getKsize();
+		int cutoff = options.getCutoff();
+		
+		String identifierRegex = options.getFilter().equals("sra") ? ExperimentMetadata.SRA_IDENTIFIER_REGEX : "";
+		
+		int threadCount = options.getThreadCount();
+		int queueSize = options.getQueueSize();
+		if (queueSize == 0) {
+			queueSize = 100 * threadCount;
+		}
 		
 		BlockingQueue<Runnable> linkedBlockingDeque = new LinkedBlockingDeque<Runnable>(queueSize);
 		ChunkedCountMinSketch sketch = new ChunkedCountMinSketch(options.getDepth(), options.getMaxMemory() / options.getDepth(), options.getChunks());
@@ -71,18 +201,12 @@ public class SignatureGenerationTool {
 		long totalTime = 0;
 		double maxErrorRate = 0;
 
-		for (int i = 0; i < sourceNames.length; i++) {
-			File currentSource = new File(sourceNames[i]);
-		
-			FileFormat format = getFileFormat(currentSource);
-			boolean gzip = options.getGzip();
-			if (!gzip && currentSource.toPath().toString().endsWith(".gz")) {
-				gzip = true;
-			}
+		for (File source : sources) {		
+			FileOptions fileOptions = FileOptions.inferFromFilename(source);
 			
-			System.out.println("Generating from " + currentSource.toPath());
+			System.out.println("Generating from " + source.toPath());
 			
-			reader = new FileSampleReader(currentSource, format, options.getBufferSize(), options.getFilter().equals("sra") ? ExperimentMetadata.SRA_IDENTIFIER_REGEX : "", gzip);
+			reader = new FileSampleReader(source, fileOptions, options.getBufferSize(), identifierRegex);
 			
 			Signature sig;
 			String line;
@@ -105,7 +229,7 @@ public class SignatureGenerationTool {
 				line = sample.readSequence();
 				
 				while (line != null) {
-					KmerProcessor process = new KmerProcessor(ksize, line, sketch, sig, cutoff);
+					SimpleProcessor process = new SimpleProcessor(ksize, line, sketch, sig, cutoff);
 					while (linkedBlockingDeque.size() >= queueSize) {
 						Thread.yield();
 					}

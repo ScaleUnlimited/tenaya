@@ -72,6 +72,21 @@ public class Signature {
 		return data;
 	}
 	
+	public int getKsize() {
+		return ksize;
+	}
+	
+	public int getCutoff() {
+		return cutoff;
+	}
+	
+	public void clear() {
+		count = 0;
+		for (int i = 0; i < size; i++) {
+			data[i] = 0;
+		}
+	}
+	
 	public double jaccard(Signature other) {
 		long[] otherData = other.get();
 		int i = 0, j = 0, matches = 0;
@@ -98,6 +113,10 @@ public class Signature {
 	
 	public String getIdentifier() {
 		return identifier;
+	}
+	
+	public void setIdentifier(String newIdentifier) {
+		identifier = newIdentifier;
 	}
 	
 	public Signature combine(Signature other) {
@@ -154,6 +173,10 @@ public class Signature {
 			hashes[i] = Long.parseLong(tokens[i]);
 		}
 		return new Signature(ksize, size, cutoff, hashes, identifier);
+	}
+	
+	public Signature clone() {
+		return new Signature(ksize, size, cutoff, data, identifier);		
 	}
 
 }

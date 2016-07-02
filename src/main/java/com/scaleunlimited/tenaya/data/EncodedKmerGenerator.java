@@ -30,8 +30,8 @@ public class EncodedKmerGenerator {
 	}
 	
 	private void readNewSequence() {
+		hasMoreKmers = false;
 		if (sample == null) {
-			hasMoreKmers = false;
 			return;
 		}
 		currentSequence = sample.readSequence();
@@ -68,12 +68,13 @@ public class EncodedKmerGenerator {
 	}
 	
 	public long next() {
-		if (currentIndex >= currentSequence.length()) {
-			readNewSequence();
-		}
 		char currentChar = currentSequence.charAt(currentIndex++);
 		shift();
 		updateChar(currentChar);
+		int len = currentSequence.length();
+		if (currentIndex >= len) {
+			readNewSequence();
+		}
 		return Kmer.unify(f, r);
 	}
 

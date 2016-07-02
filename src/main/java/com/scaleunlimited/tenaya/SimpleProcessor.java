@@ -6,7 +6,7 @@ import com.scaleunlimited.tenaya.data.MurmurHash3;
 import com.scaleunlimited.tenaya.data.Signature;
 import com.scaleunlimited.tenaya.sample.StringSample;
 
-public class KmerProcessor implements Runnable {
+public class SimpleProcessor implements Runnable {
 	
 	private EncodedKmerGenerator generator;
 	private Signature sig;
@@ -14,7 +14,7 @@ public class KmerProcessor implements Runnable {
 	private int ksize;
 	private int cutoff;
 	
-	public KmerProcessor(int ksize, String sequence, KmerCounter output, Signature signature, int cutoff) {
+	public SimpleProcessor(int ksize, String sequence, KmerCounter output, Signature signature, int cutoff) {
 		this.ksize = ksize;
 		sig = signature;
 		generator = new EncodedKmerGenerator(ksize, new StringSample(sequence));

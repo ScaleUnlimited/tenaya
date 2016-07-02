@@ -33,7 +33,7 @@ public class CountMinSketchTest {
 			counts[i][1] = count;
 			long[] hashes = hash(value, seeds);
 			for (int j = 0; j < count; j++) {
-				sketch.add(hashes);
+				sketch.add(hashes[0]);
 			}
 		}
 		int errors = 0;
@@ -41,7 +41,7 @@ public class CountMinSketchTest {
 			int value = counts[i][0];
 			long[] hashes = hash(value, seeds);
 			int expectedCount = counts[i][1];
-			int sketchCount = sketch.count(hashes);
+			int sketchCount = sketch.count(hashes[0]);
 			if (expectedCount != sketchCount) {
 				errors++;
 			}

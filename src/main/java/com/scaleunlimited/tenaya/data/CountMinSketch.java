@@ -10,15 +10,33 @@ import java.util.HashMap;
 
 public class CountMinSketch implements KmerCounter {
 	
-	private byte[] data;
-	private int rows, cols;
-	private int occupants;
+	private byte[][] data;
+	private int rows;
+	private long occupants;
+	private int size;
+	private int[] rowSizes;
+	private int[] indices;
 	
 	public CountMinSketch(int rows, int cols) {
 		this.rows = rows;
-		this.cols = cols;
 		this.occupants = 0;
-		this.data = new byte[rows * cols];
+		this.rowSizes = CountMinSketch.generatePrimesAround(cols, rows);
+		this.size = 0;
+		this.data = new byte[rows][];
+		for (int i = 0; i < rows; i++) {
+			size += rowSizes[i];
+			data[i] = new byte[rowSizes[i]];
+		}
+		this.indices = new int[rows];
+	}
+	
+	public int[] calculateIndices(long hash) {
+		int prevSum = 0;
+		for (int i = 0; i < rows; i++) {
+			indices[i] = (int) (hash & Kmer.UNSIGNED_INT_MASK) % rowSizes[i]; 
+			prevSum += rowSizes[i];
+		}
+		return indices;
 	}
 	
 	public int addKmer(String kmer, int ksize) {
@@ -26,21 +44,20 @@ public class CountMinSketch implements KmerCounter {
 	}
 	
 	public int addKmer(long kmer, int ksize) {
-		return add(Kmer.hashMurmur(kmer, rows, ksize, null));
+		return add(Kmer.hashMurmur(kmer, ksize));
 	}
 	
-	public int add(long[] hashes) {
+	public int add(long hash) {
 		int count = Integer.MAX_VALUE;
+		int[] indices = calculateIndices(hash);
 		for (int i = 0; i < rows; i++) {
-			int index = (int) (hashes[i] & Kmer.UNSIGNED_INT_MASK) % cols;
-			int calcIndex = i * cols + index;
-			byte currentCount = data[calcIndex];
-			data[calcIndex] = (byte) (currentCount + 1);
+			int index = indices[i];
+			byte currentCount = data[i][index];
+			if (currentCount != Byte.MAX_VALUE) {
+				data[i][index] = (byte) (currentCount + 1);
+			}
 			if (currentCount < count) {
 				count = currentCount;
-			}
-			if (data[calcIndex] < 0) {
-				data[calcIndex] = Byte.MAX_VALUE;
 			}
 		}
 		if (count == 0) {
@@ -49,11 +66,12 @@ public class CountMinSketch implements KmerCounter {
 		return count;
 	}
 	
-	public int count(long[] hashes) {
+	public int count(long hash) {
 		int count = Integer.MAX_VALUE;
+		int[] indices = calculateIndices(hash);
 		for (int i = 0; i < rows; i++) {
-			int index = (int) (hashes[i] & Kmer.UNSIGNED_INT_MASK) % cols;
-			byte currentCount = data[i * cols + index];
+			int index = indices[i];
+			byte currentCount = data[i][index];
 			if (currentCount < count) {
 				count = currentCount;
 			}
@@ -62,8 +80,7 @@ public class CountMinSketch implements KmerCounter {
 	}
 	
 	public int countKmer(long kmer, int ksize) {
-		long[] hashes = Kmer.hashMurmur(kmer, rows, ksize, null);
-		return count(hashes);
+		return count(Kmer.hashMurmur(kmer, ksize));
 	}
 	
 	public int countKmer(String kmer, int ksize) {
@@ -71,28 +88,36 @@ public class CountMinSketch implements KmerCounter {
 	}
 	
 	public double getErrorRate() {
-		return Math.pow(1.0 - Math.pow(1.0 - (1.0 / ((double) cols)), occupants), rows);
+		double product = 1.0;
+		for (int i = 0; i < rows; i++) {
+			product *= (1.0 - Math.pow(1.0 - 1.0 / rowSizes[i], occupants));
+		}
+		return product;
 	}
 	
-	public int getOccupancy() {
+	public long getOccupancy() {
 		return occupants;
 	}
 	
 	public void readFromFile(File file) throws IOException {
 		FileInputStream inputStream = new FileInputStream(file);
-		inputStream.read(data);
+		for (int i = 0; i < rows; i++) {
+			inputStream.read(data[i]);
+		}
 		inputStream.close();
 	}
 	
 	public void writeToFile(File file) throws IOException {
 		FileOutputStream outputStream = new FileOutputStream(file);
-		outputStream.write(data);
+		for (int i = 0; i < rows; i++) {
+			outputStream.write(data[i]);
+		}
 		outputStream.close();
 		
 		HashMap<String, String> properties = new HashMap<String, String>();
 		properties.put("Rows", Integer.toString(rows));
-		properties.put("Columns", Integer.toString(cols));
-		properties.put("Occupancy", Integer.toString(occupants));
+		properties.put("Size", Long.toString(size));
+		properties.put("Occupancy", Long.toString(occupants));
 		properties.put("Error Rate", Double.toString(getErrorRate()));
 		FileWriter infoWriter = new FileWriter(new File(file.toPath().toString() + ".info"));
 		PrintWriter printWriter = new PrintWriter(infoWriter);
@@ -104,11 +129,33 @@ public class CountMinSketch implements KmerCounter {
 	}
 
 	@Override
-	public synchronized void reset() {
-		for (int i = 0; i < data.length; i++) {
-			data[i] = 0;
+	public void reset() {
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < rowSizes[i]; j++) {
+				data[i][j] = 0;
+			}
 		}
 		occupants = 0;
+	}
+
+	public static int[] generatePrimesAround(int cols, int multiplicity) {
+		if (cols % 2 == 0) {
+			cols--;
+		}
+		int[] primes = new int[multiplicity];
+		int count = 0;
+		while (count < multiplicity) {
+			int upperBound = (int) Math.floor(Math.sqrt(cols));
+			for (int i = 3; i <= upperBound; i++) {
+				if (cols % i == 0) {
+					break;
+				} else if (i == upperBound) {
+					primes[count++] = cols;
+				}
+			}
+			cols -= 2;
+		}
+		return primes;
 	}
 
 }

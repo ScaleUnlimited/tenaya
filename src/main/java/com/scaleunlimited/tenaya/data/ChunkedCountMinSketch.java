@@ -33,7 +33,7 @@ public class ChunkedCountMinSketch implements KmerCounter {
 	
 	public ChunkedCountMinSketch(int rows, long cols, int chunks) {
 		this.rows = rows;
-		this.rowSizes = generatePrimesAround(cols, rows);
+		this.rowSizes = ChunkedCountMinSketch.generatePrimesAround(cols, rows);
 		this.size = 0;
 		for (int i = 0; i < rows; i++) {
 			size += rowSizes[i];
@@ -42,26 +42,6 @@ public class ChunkedCountMinSketch implements KmerCounter {
 		this.chunkSize = (int) ((size / chunks) + 1);
 		this.occupants = 0;
 		this.data = new byte[chunks][chunkSize];
-	}
-	
-	public static long[] generatePrimesAround(long cols, int multiplicity) {
-		if (cols % 2 == 0) {
-			cols--;
-		}
-		long[] primes = new long[multiplicity];
-		int count = 0;
-		while (count < multiplicity) {
-			int upperBound = (int) Math.floor(Math.sqrt(cols));
-			for (int i = 3; i <= upperBound; i++) {
-				if (cols % i == 0) {
-					break;
-				} else if (i == upperBound) {
-					primes[count++] = cols;
-				}
-			}
-			cols -= 2;
-		}
-		return primes;
 	}
 	
 	public int[][] calculateIndices(long hash) {
@@ -182,6 +162,26 @@ public class ChunkedCountMinSketch implements KmerCounter {
 			}
 		}
 		occupants = 0;
+	}
+	
+	public static long[] generatePrimesAround(long cols, int multiplicity) {
+		if (cols % 2 == 0) {
+			cols--;
+		}
+		long[] primes = new long[multiplicity];
+		int count = 0;
+		while (count < multiplicity) {
+			int upperBound = (int) Math.floor(Math.sqrt(cols));
+			for (int i = 3; i <= upperBound; i++) {
+				if (cols % i == 0) {
+					break;
+				} else if (i == upperBound) {
+					primes[count++] = cols;
+				}
+			}
+			cols -= 2;
+		}
+		return primes;
 	}
 
 }
