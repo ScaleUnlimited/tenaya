@@ -118,7 +118,11 @@ public class SignatureGenerationTool {
 					}
 					queue.add(encodedKmer);
 					if (kmers % 10000000 == 0) {
-						System.out.println(kmers + " (" + (System.currentTimeMillis() - start) + " ms)");
+						System.out.print(kmers + " (" + (System.currentTimeMillis() - start) + " ms)");
+						for (int i = 0; i < threadCount; i++) {
+							System.out.print(" " + threads[threadId].getQueue().size());
+						}
+						System.out.println();
 					}
 					kmers++;
 				}

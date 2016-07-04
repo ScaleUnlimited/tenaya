@@ -14,6 +14,14 @@ public class LongQueue {
 		tail = 0;
 	}
 	
+	public int size() {
+		if (tail >= head) {
+			return tail - head;
+		} else {
+			return tail + size - head + 1;
+		}
+	}
+	
 	public boolean add(long value) {
 		if (!isFull()) {
 			queue[tail] = value;

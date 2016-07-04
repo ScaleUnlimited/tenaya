@@ -22,4 +22,18 @@ public class LongQueueTest {
 		assertEquals("Queue should not allow overflow", false, queue.add(2));
 	}
 	
+	@Test
+	public void testQueueSize() {
+		LongQueue queue = new LongQueue(10);
+		for (int i = 0; i < 5; i++) {
+			queue.add(i);
+		}
+		assertEquals("Queue size should return the proper size before overflowing", 5, queue.size());
+		for (int i = 0; i < 10;  i++) {
+			if (i < 5) queue.get();
+			queue.add(i);
+		}
+		assertEquals("Queue size should return the proper size after overflowing", 10, queue.size());
+	}
+	
 }
