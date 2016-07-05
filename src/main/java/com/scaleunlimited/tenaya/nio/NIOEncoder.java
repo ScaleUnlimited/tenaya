@@ -1,7 +1,6 @@
 package com.scaleunlimited.tenaya.nio;
 
 import com.scaleunlimited.tenaya.data.Kmer;
-import com.scaleunlimited.tenaya.sample.Sample;
 
 public class NIOEncoder {
 	

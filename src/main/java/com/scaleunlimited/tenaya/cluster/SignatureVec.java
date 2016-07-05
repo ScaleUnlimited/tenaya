@@ -4,6 +4,7 @@ import com.scaleunlimited.tenaya.data.Signature;
 
 import jsat.linear.Vec;
 
+@SuppressWarnings("serial")
 public class SignatureVec extends Vec {
 	
 	private int size;

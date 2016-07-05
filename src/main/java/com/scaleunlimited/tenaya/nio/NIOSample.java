@@ -3,7 +3,6 @@ package com.scaleunlimited.tenaya.nio;
 public class NIOSample {
 	
 	private NIOFastAParser parser;
-	private NIOEncoder encoder;
 	
 	public NIOSample(NIOFastAParser parser) {
 		this.parser = parser;

@@ -3,7 +3,6 @@ package com.scaleunlimited.tenaya.nio;
 import static org.junit.Assert.*;
 
 import java.io.File;
-import java.io.IOException;
 
 import org.junit.Test;
 
@@ -14,6 +13,7 @@ import com.scaleunlimited.tenaya.sample.Sample;
 
 public class NIOEncoderTest {
 	
+	@SuppressWarnings("resource")
 	@Test
 	public void testEncoder() throws Exception {
 		int ksize = 20;

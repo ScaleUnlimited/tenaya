@@ -6,8 +6,9 @@ import java.util.concurrent.ExecutorService;
 import jsat.linear.Vec;
 import jsat.linear.distancemetrics.DistanceMetric;
 
+@SuppressWarnings("serial")
 public class SignatureDistance implements DistanceMetric {
-	
+
 	public SignatureDistance() {
 		
 	}

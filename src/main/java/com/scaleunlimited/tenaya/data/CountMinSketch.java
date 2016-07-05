@@ -31,10 +31,8 @@ public class CountMinSketch implements KmerCounter {
 	}
 	
 	public int[] calculateIndices(long hash) {
-		int prevSum = 0;
 		for (int i = 0; i < rows; i++) {
-			indices[i] = (int) (hash & Kmer.UNSIGNED_INT_MASK) % rowSizes[i]; 
-			prevSum += rowSizes[i];
+			indices[i] = (int) (hash & Kmer.UNSIGNED_INT_MASK) % rowSizes[i];
 		}
 		return indices;
 	}

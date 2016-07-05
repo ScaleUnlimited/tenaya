@@ -1,13 +1,11 @@
 package com.scaleunlimited.tenaya.metadata;
 
 import java.io.PrintWriter;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.dom4j.Document;
 import org.dom4j.Element;
-import org.xml.sax.InputSource;
 
 public class ExperimentMetadata {
 	
@@ -21,6 +19,7 @@ public class ExperimentMetadata {
 	private String title;
 	private List<String> runAccessions;
 	
+	@SuppressWarnings("rawtypes")
 	private ExperimentMetadata(Document doc) throws Exception {
 		Element root = doc.getRootElement();
 

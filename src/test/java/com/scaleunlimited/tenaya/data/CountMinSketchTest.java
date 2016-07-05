@@ -163,7 +163,6 @@ public class CountMinSketchTest {
 		
 		for (int i = 0; i < NUM_KMERS; i++) {
 			long kmer = counts[i][0];
-			long refCount = reference.countKmer(kmer, 32);
 			long chunkedCount = chunked.countKmer(kmer, 32);
 			assertTrue("Chunked Count-Min Sketch should never undercount", chunkedCount >= counts[i][1]);
 		}

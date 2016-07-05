@@ -7,6 +7,7 @@ import com.scaleunlimited.tenaya.data.Signature;
 import jsat.DataSet;
 import jsat.classifiers.DataPoint;
 
+@SuppressWarnings("rawtypes")
 public class SignatureDataSet extends DataSet {
 	
 	private Signature[] signatures;

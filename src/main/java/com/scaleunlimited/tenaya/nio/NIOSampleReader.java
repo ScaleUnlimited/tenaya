@@ -5,13 +5,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import com.scaleunlimited.tenaya.metadata.ExperimentMetadata;
 
 public class NIOSampleReader implements Closeable {
 

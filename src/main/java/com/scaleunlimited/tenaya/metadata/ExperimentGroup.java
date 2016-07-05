@@ -22,6 +22,7 @@ public class ExperimentGroup {
 		readNextSet();
 	}
 	
+	@SuppressWarnings("rawtypes")
 	private void readNextSet() throws Exception {
 		Document doc = XmlHttpReader.getDocumentFromUrl(baseUrl + "&retstart=" + retStart);
 		retStart = getIntField(doc, "/eSearchResult/RetStart");
