@@ -7,9 +7,26 @@ import java.util.regex.Pattern;
 
 public class FastAParser implements Parser {
 	
+	public enum ParserState {
+		READ_LINE_WANT_SEQ,
+		READ_LINE,
+		READ_SEQ,
+		PARSE_LINE
+	}
+	
+	public enum LineType {
+		COMMENT,
+		IDENTIFIER,
+		SEQUENCE
+	}
+	
 	private Pattern pattern;
 	private BufferedReader bufferedReader;
 	private String identifier;
+	
+	private String lastLine;
+	
+	private ParserState state;
 	
 	public FastAParser(BufferedReader reader) {
 		this(reader, ">.*");
@@ -18,6 +35,17 @@ public class FastAParser implements Parser {
 	public FastAParser(BufferedReader reader, String identifierRegex) {
 		bufferedReader = reader;
 		pattern = Pattern.compile(identifierRegex);
+		state = ParserState.READ_LINE;
+	}
+	
+	public LineType getLineType(String line) {
+		if (line.startsWith(";")) {
+			return LineType.COMMENT;
+		} else if (line.startsWith(">")) {
+			return LineType.IDENTIFIER;
+		} else {
+			return LineType.SEQUENCE;
+		}
 	}
 	
 	public String readLine() {
@@ -54,26 +82,49 @@ public class FastAParser implements Parser {
 
 	@Override
 	public String readSequence(String identifier) {
-		String line;
 		String seq = "";
-		boolean sawSeq = false;
-		while ((line = readLine()) != null) {
-			if (line.startsWith(";")) {
-				if (sawSeq) return seq;
-				// pass; we don't care about comments
-			} else if (line.startsWith(">")) {
-				this.identifier = parseIdentifierLine(line);
-				if (!this.identifier.equals(identifier)) {
+		while (true) {
+			switch (state) {
+			case READ_LINE:
+				lastLine = readLine();
+				if (lastLine == null) {
 					return null;
 				}
-				if (sawSeq) return seq;
-			} else {
-				seq += line;
-				sawSeq = true;
+				state = ParserState.PARSE_LINE;
+				break;
+			case READ_LINE_WANT_SEQ:
+				lastLine = readLine();
+				if (lastLine == null) {
+					return null;
+				}
+				state = ParserState.READ_SEQ;
+				break;
+			case PARSE_LINE:
+				LineType type = getLineType(lastLine);
+				switch (type) {
+				case IDENTIFIER:
+					this.identifier = parseIdentifierLine(lastLine);
+					if (!this.identifier.equals(identifier)) {
+						return null;
+					}
+				case COMMENT:
+					state = ParserState.READ_LINE;
+					break;
+				case SEQUENCE:
+					state = ParserState.READ_SEQ;
+					break;
+				}
+				break;
+			case READ_SEQ:
+				if (getLineType(lastLine) != LineType.SEQUENCE) {
+					state = ParserState.PARSE_LINE;
+					return seq;
+				} else {
+					state = ParserState.READ_LINE_WANT_SEQ;
+					seq += lastLine;
+				}
 			}
 		}
-		this.identifier = null;
-		return null;
 	}
 
 	@Override

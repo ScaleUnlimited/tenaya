@@ -68,6 +68,9 @@ public class EncodedKmerGenerator {
 	}
 	
 	public long next() {
+		if (!hasNext()) {
+			return 0L;
+		}
 		char currentChar = currentSequence.charAt(currentIndex++);
 		shift();
 		updateChar(currentChar);

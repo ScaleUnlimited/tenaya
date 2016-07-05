@@ -12,6 +12,7 @@ public class PartitionProcessor extends Thread {
 	private Signature signature;
 	private KmerCounter kmerCounter;
 	private int cutoff;
+	private boolean running;
 	
 	public PartitionProcessor(LongQueue hashQueue, Signature sig, KmerCounter kCounter) {
 		this.hashQueue = hashQueue;
@@ -19,13 +20,20 @@ public class PartitionProcessor extends Thread {
 		signature = sig;
 		kmerCounter = kCounter;
 		this.cutoff = sig.getCutoff();
+		running = true;
 	}
 	
 	@Override
 	public void run() {
-		while (true) {
+		while (running) {
 			while (hashQueue.isEmpty()) {
-				Thread.yield();
+				if (!running) return;
+				try {
+					Thread.sleep(1);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 			long nextHash = hashQueue.get();
 			kmerCounter.addKmer(nextHash, ksize);
@@ -50,6 +58,10 @@ public class PartitionProcessor extends Thread {
 	public void reset() {
 		kmerCounter.reset();
 		signature.clear();
+	}
+	
+	public void halt() {
+		running = false;
 	}
 
 }

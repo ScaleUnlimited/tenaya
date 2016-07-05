@@ -139,8 +139,7 @@ public class Signature {
 		
 		Pattern pattern = Pattern.compile(ExperimentMetadata.SRA_IDENTIFIER_REGEX);
 		Matcher matcher = pattern.matcher(identifier);
-		matcher.find();
-		if (matcher.groupCount() > 0) {
+		if (matcher.find()) {
 			ExperimentMetadata exp = ExperimentMetadata.createFromAccession(matcher.group(0));
 			contents.put("scientificName", exp.getScientificName());
 			contents.put("title", exp.getTitle());

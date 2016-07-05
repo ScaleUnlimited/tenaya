@@ -14,16 +14,17 @@ import org.kohsuke.args4j.CmdLineParser;
 
 import com.scaleunlimited.tenaya.data.Signature;
 import com.scaleunlimited.tenaya.metadata.ExperimentMetadata;
+import com.scaleunlimited.tenaya.nio.*;
 import com.scaleunlimited.tenaya.sample.FileSampleReader;
 import com.scaleunlimited.tenaya.sample.Sample;
-import com.scaleunlimited.tenaya.sample.FileSampleReader.FileFormat;
-import com.scaleunlimited.tenaya.sample.FileSampleReader.FileOptions;
+import com.scaleunlimited.tenaya.sample.FileOptions;
 import com.scaleunlimited.tenaya.data.ChunkedCountMinSketch;
 import com.scaleunlimited.tenaya.data.CountMinSketch;
 import com.scaleunlimited.tenaya.data.EncodedKmerGenerator;
 import com.scaleunlimited.tenaya.data.Kmer;
 import com.scaleunlimited.tenaya.data.KmerCounter;
 import com.scaleunlimited.tenaya.data.LongQueue;
+import com.scaleunlimited.tenaya.data.MurmurHash3;
 
 public class SignatureGenerationTool {
 	
@@ -81,6 +82,8 @@ public class SignatureGenerationTool {
 		int depth = options.getDepth();
 		int width = memoryPerThread / depth;
 		
+		long[] hashesSent = new long[threadCount];
+		
 		PartitionProcessor[] threads = new PartitionProcessor[threadCount];
 		for (int i = 0; i < threadCount; i++) {
 			LongQueue queue = new LongQueue(queueSize);
@@ -92,12 +95,16 @@ public class SignatureGenerationTool {
 		
 		long totalTime = 0;
 		
-		for (File source : sources) {
+		for (int j = 0; j < sources.length; j++) {
+			File source = sources[j];
+			
 			System.out.println("Reading from file " + source.getName());
 			
-			FileSampleReader reader = new FileSampleReader(source, FileOptions.inferFromFilename(source), bufferSize, identifierRegex);
+			// TODO make this handle compressed and FASTQ files
+			NIOSampleReader reader = new NIOSampleReader(source, bufferSize, identifierRegex);
 			
-			Sample sample;
+			NIOEncoder encoder;
+			NIOSample sample;
 			while ((sample = reader.readSample()) != null) {
 				System.out.println("Reading sample " + sample.getIdentifier());
 				
@@ -108,19 +115,20 @@ public class SignatureGenerationTool {
 				long start = System.currentTimeMillis();
 				long kmers = 0;
 				
-				EncodedKmerGenerator generator = new EncodedKmerGenerator(ksize, sample);
-				while (generator.hasNext()) {
-					long encodedKmer = generator.next();
-					int threadId = (int) ((Kmer.UNSIGNED_INT_MASK & encodedKmer) % threadCount);
+				encoder = new NIOEncoder(ksize, sample);
+				while (encoder.hasNext()) {
+					long encodedKmer = encoder.next();
+					int threadId = (int) ((Kmer.UNSIGNED_INT_MASK & MurmurHash3.fmix64(encodedKmer)) % threadCount);
 					LongQueue queue = threads[threadId].getQueue();
 					while (queue.isFull()) {
-						Thread.yield();
+						Thread.sleep(1);
 					}
+					hashesSent[threadId] += 1;
 					queue.add(encodedKmer);
 					if (kmers % 10000000 == 0) {
 						System.out.print(kmers + " (" + (System.currentTimeMillis() - start) + " ms)");
 						for (int i = 0; i < threadCount; i++) {
-							System.out.print(" " + threads[threadId].getQueue().size());
+							System.out.print(" " + threads[i].getQueue().size());
 						}
 						System.out.println();
 					}
@@ -175,7 +183,17 @@ public class SignatureGenerationTool {
 			
 			reader.close();
 			
+			for (int k = 0; k < threadCount; k++) {
+				threads[k].halt();
+			}
+			
 			System.out.println("Total time: " + totalTime + " ms");
+			
+			System.out.println("Thread distribution statistics:");
+			
+			for (int i = 0; i < threadCount; i++) {
+				System.out.println(hashesSent[i]);
+			}
 			
 		}
 			
