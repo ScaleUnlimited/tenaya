@@ -46,6 +46,9 @@ public class SignatureGenerationToolOptions {
 	@Option(name="--gzip", usage="Input file is gzipped", required=false)
 	private boolean gzip = false;
 	
+	@Option(name="--pid", usage="Display process PIDS with output", required=false)
+	private boolean pid = false;
+	
 	@Option(name="-i", usage="Input FASTA or FASTQ file(s) (separated by commas)", required=true, aliases="--input")
 	public void setInputFiles(String nameList) {
 		String[] names = nameList.split(",");
@@ -109,6 +112,10 @@ public class SignatureGenerationToolOptions {
 	
 	public int getQueueSize() {
 		return queueSize;
+	}
+	
+	public boolean getPid() {
+		return pid;
 	}
 
 }

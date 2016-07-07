@@ -1,6 +1,7 @@
 package com.scaleunlimited.tenaya;
 
 import java.io.File;
+import java.lang.management.ManagementFactory;
 import java.text.DecimalFormat;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -60,6 +61,11 @@ public class SignatureGenerationTool {
 		System.exit(-1);
 	}
 	
+	public static int getPid() {
+		String name = ManagementFactory.getRuntimeMXBean().getName();
+		return Integer.parseInt(name.split("@")[0]);
+	}
+	
 	public static void generateSignaturesPartitioned(SignatureGenerationToolOptions options) throws Exception {
 		File[] sources = options.getInputFiles();
 		File dest = options.getOutputFile();
@@ -79,6 +85,9 @@ public class SignatureGenerationTool {
 		int memoryPerThread = (int) (maxMemory / threadCount);
 		int depth = options.getDepth();
 		int width = memoryPerThread / depth;
+		
+		boolean displayPid = options.getPid();
+		int pid = getPid();
 		
 		long[] hashesSent = new long[threadCount];
 		
@@ -137,9 +146,10 @@ public class SignatureGenerationTool {
 					hashesSent[threadId] += 1;
 					queue.add(encodedKmer);
 					if (kmers % 10000000 == 0) {
+						if (displayPid) System.out.print(pid + ": ");
 						System.out.print(kmers + " (" + (System.currentTimeMillis() - start) + " ms)");
 						for (int i = 0; i < threadCount; i++) {
-							System.out.print(" " + threads[i].getQueue().size());
+							System.out.print("\t" + threads[i].getQueue().size());
 						}
 						System.out.println();
 					}

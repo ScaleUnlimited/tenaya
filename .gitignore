@@ -5,3 +5,6 @@
 bin/
 build/
 .gradle/
+
+# OS X
+.DS_STORE

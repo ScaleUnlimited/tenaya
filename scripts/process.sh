@@ -17,7 +17,7 @@ for i in `seq 1 $groups`; do
     inputfile="$inputfile,${files[j]}";
     j=$((j+1));
   done
-  java -Xmx8g -jar tenaya.jar generate -i $inputfile -o $TENAYA_HOME/sigs/#id.sig -M 5000000000 -k 20 -c 1 -m partition -b 1048576 -q 10000 -t $threadgroup &
+  java -Xmx8g -jar tenaya.jar generate --pid -i $inputfile -o $TENAYA_HOME/sigs/#id.sig -M 5000000000 -k 20 -c 1 -m partition -b 1048576 -q 10000 -t $threadgroup &
 done
 
 wait
