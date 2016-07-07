@@ -28,6 +28,7 @@ dependencies {
 	compile 'dom4j:dom4j:1.5.1'
 	compile 'crimson:crimson:1.1.3'
 	compile 'com.edwardraff:JSAT:0.0.5'
+	compile 'com.apporiented:hierarchical-clustering:1.1.0'
 
     testCompile 'junit:junit:4.12'
 }

@@ -20,6 +20,9 @@ public class SignatureClusterToolOptions {
 	@Option(name="-f", usage="Set output format string where #id is replaced with the id and similarly with #name for scientific name and #title for the title (#name and #title only for SRA reads)", required=false, aliases="--format")
 	private String format = "#id";
 	
+	@Option(name="-n", usage="Set the number of times to permute (complex only)", required=false)
+	private int n = 100;
+	
 	public String getMethod() {
 		return method;
 	}
@@ -38,6 +41,10 @@ public class SignatureClusterToolOptions {
 	
 	public String getFormat() {
 		return format;
+	}
+	
+	public int getN() {
+		return n;
 	}
 	
 }
