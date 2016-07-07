@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Installing SRA Toolkit";
-wget http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/2.6.3/sratoolkit.2.6.3-ubuntu64.tar.gz -o sratoolkit.tar.gz;
+wget http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/2.6.3/sratoolkit.2.6.3-ubuntu64.tar.gz -O sratoolkit.tar.gz;
 tar -xvzf sratoolkit.tar.gz;
 PATH=$PATH:$(pwd)/sratoolkit/bin;
 

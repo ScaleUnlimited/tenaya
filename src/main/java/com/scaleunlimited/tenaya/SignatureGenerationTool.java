@@ -1,6 +1,7 @@
 package com.scaleunlimited.tenaya;
 
 import java.io.File;
+import java.text.DecimalFormat;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -92,6 +93,19 @@ public class SignatureGenerationTool {
 		
 		long totalTime = 0;
 		
+		System.out.println();
+		
+		System.out.println("Files queued:");
+		
+		final int ONE_GB = 1024 * 1024 * 1024;
+		DecimalFormat sizeFormat = new DecimalFormat("###.0");
+		for (int j = 0; j < sources.length; j++) {
+			File source = sources[j];
+			System.out.println(source.getName() + " (" + sizeFormat.format(((double) source.length()) / ONE_GB) + "GB)");
+		}
+		
+		System.out.println();
+		
 		for (int j = 0; j < sources.length; j++) {
 			File source = sources[j];
 			
@@ -176,23 +190,25 @@ public class SignatureGenerationTool {
 				totalTime += diff;
 				
 				System.out.println();
+				
 			}
 			
 			reader.close();
 			
-			for (int k = 0; k < threadCount; k++) {
-				threads[k].halt();
-			}
-			
-			System.out.println("Total time: " + totalTime + " ms");
-			
-			System.out.println("Thread distribution statistics:");
-			
-			for (int i = 0; i < threadCount; i++) {
-				System.out.println(hashesSent[i]);
-			}
-			
 		}
+		
+		for (int k = 0; k < threadCount; k++) {
+			threads[k].halt();
+		}
+		
+		System.out.println("Total time: " + totalTime + " ms");
+		
+		System.out.println("Thread distribution statistics:");
+		
+		for (int i = 0; i < threadCount; i++) {
+			System.out.println(hashesSent[i]);
+		}
+		
 			
 	}
 	

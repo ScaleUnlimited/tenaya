@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.scaleunlimited.tenaya.data.Signature;
+import com.scaleunlimited.tenaya.metadata.ExperimentMetadata;
 
 public class ClusterGroup {
 	
@@ -23,7 +24,7 @@ public class ClusterGroup {
 	
 	public List<Cluster> cluster() {
 		for (Signature sig : signatures) {
-			System.out.println("Processing " + sig.getIdentifier());
+			//System.out.println("Processing " + sig.getIdentifier());
 			if (clusters.size() == 0) {
 				Cluster first = new OptimisticCluster();
 				first.add(sig);
@@ -43,27 +44,33 @@ public class ClusterGroup {
 					closest = cluster;
 				}
 			}
-			System.out.println("Best similarity: " + closestSim);
+			//System.out.println("Best similarity: " + closestSim);
 			int numClusters = close.size();
 			if (numClusters == 0) {
-				System.out.println("Too different");
+				//System.out.println("Too different");
 				Cluster another = new OptimisticCluster();
 				another.add(sig);
 				clusters.add(another);
 			} else {
 				if (numClusters > 1) {
 					System.out.println("Ignoring the " + numClusters + " clusters within the threshold");
-					System.out.println("Too similar");
+					//System.out.println("Too similar");
 				} else {
-					System.out.println("Just right");
+					//System.out.println("Just right");
 				}
 				closest.add(sig);
 			}
 		}
+		System.out.println("Found " + clusters.size() + " clusters");
 		for (Cluster c : clusters) {
-			System.out.println("Cluster " + c.toString());
+			System.out.println("====Cluster====");
 			for (Signature s : c.getSignatures()) {
-				System.out.println(s.getIdentifier());
+				try {
+					System.out.println(ExperimentMetadata.createFromAccession(s.getIdentifier()).getScientificName());
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		}
 		return clusters;

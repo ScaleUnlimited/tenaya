@@ -18,6 +18,8 @@ public class Main {
 				DataSearchTool.main(modifiedArgs);
 			} else if (action.equals("cluster")) {
 				SignatureClusterTool.main(modifiedArgs);
+			} else if (action.equals("flame")) {
+				FlameClusterTool.main(modifiedArgs);
 			} else {
 				System.err.println("Tool failed: unknown action '" + action + "'");
 			}

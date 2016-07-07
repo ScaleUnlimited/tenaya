@@ -38,7 +38,12 @@ public class SignatureDistance implements DistanceMetric {
 				matches++;
 			}
 		}
-		return 1.0 - ((double) matches) / ((double) aHashes.length);
+		double dist = 1.0 - ((double) matches) / ((double) aHashes.length);
+		if (dist < 0.15) {
+			return 0;
+		} else {
+			return dist;
+		}
 	}
 
 	@Override
