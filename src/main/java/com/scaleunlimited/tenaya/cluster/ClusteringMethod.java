@@ -4,9 +4,8 @@ import java.util.List;
 
 import com.scaleunlimited.tenaya.data.Signature;
 
-public interface Cluster {
+public interface ClusteringMethod {
 	
-	public void add(Signature sig);
-	public List<Signature> getSignatures();
+	public List<Cluster> cluster(List<Signature> signatures);
 
 }

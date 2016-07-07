@@ -2,11 +2,13 @@ package com.scaleunlimited.tenaya.data;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
+
 import org.junit.Test;
 
-import com.scaleunlimited.tenaya.cluster.ClusterGroup;
+import com.scaleunlimited.tenaya.cluster.SimpleClusterer;
 
-public class ClusterGroupTest {
+public class SimpleClustererTest {
 
 	@Test
 	public void testCluster() {
@@ -17,10 +19,8 @@ public class ClusterGroupTest {
 		sig2.add(2);
 		sig2.add(0);
 		assertEquals("similarity between half-similar signatures should be 0.5", 0.5, sig1.jaccard(sig2), 0.001);
-		ClusterGroup group = new ClusterGroup(0.5);
-		group.addSignature(sig1);
-		group.addSignature(sig2);
-		assertEquals("both signatures should cluster into the same grouping", 1, group.cluster().size());
+		SimpleClusterer group = new SimpleClusterer(0.5);
+		assertEquals("both signatures should cluster into the same grouping", 1, group.cluster(Arrays.asList(new Signature[]{ sig1, sig2 })).size());
 	}
 	
 }

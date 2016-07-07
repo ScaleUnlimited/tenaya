@@ -21,6 +21,10 @@ public class SignatureVec extends Vec {
 		return new SignatureVec(signature.getIdentifier(), signature.getSize(), signature.get());
 	}
 	
+	public Signature asSignature() {
+		return new Signature(0, size, 0, hashes, identifier);
+	}
+	
 	public String getIdentifier() {
 		return identifier;
 	}

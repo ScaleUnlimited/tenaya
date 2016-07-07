@@ -7,7 +7,7 @@ import java.util.Set;
 
 import com.scaleunlimited.tenaya.data.Signature;
 
-public class OptimisticCluster extends Cluster {
+public class OptimisticCluster implements Cluster {
 
 	private Set<Long> hashes;
 	private List<Signature> signatures;
@@ -17,6 +17,7 @@ public class OptimisticCluster extends Cluster {
 		hashes = new HashSet<Long>();
 	}
 	
+	@Override
 	public void add(Signature sig) {
 		signatures.add(sig);
 		for (Long hash : sig.get()) {
@@ -24,6 +25,7 @@ public class OptimisticCluster extends Cluster {
 		}
 	}
 	
+	@Override
 	public List<Signature> getSignatures() {
 		return signatures;
 	}

@@ -23,7 +23,7 @@ public class Signature {
 	private int cutoff;
 	private String identifier;
 	
-	private Signature(int ksize, int size,  int cutoff, long[] data, String identifier) {
+	public Signature(int ksize, int size,  int cutoff, long[] data, String identifier) {
 		this.cutoff = cutoff;
 		this.size = size;
 		this.count = 0;
