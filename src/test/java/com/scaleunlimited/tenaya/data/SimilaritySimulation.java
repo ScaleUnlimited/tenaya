@@ -51,7 +51,7 @@ public class SimilaritySimulation {
 		return ((double) overlaps) / ((double) a.length);
 	}
 	
-	// Implementing Fisher–Yates shuffle
+	// Implementing Fisher-Yates shuffle
 	public static void shuffleArray(int[] ar)
 	  {
 	    // If running on Java 6 or older, use `new Random()` on RHS here

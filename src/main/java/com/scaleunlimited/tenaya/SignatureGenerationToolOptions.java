@@ -5,6 +5,11 @@ import org.kohsuke.args4j.Option;
 
 public class SignatureGenerationToolOptions {
 	
+	public enum GenerationMethod {
+		SIMPLE,
+		PARTITION
+	}
+	
 	private File[] inputs;
 	
 	@Option(name="-o", usage="Output signature file", required=true, aliases="--output")
@@ -38,7 +43,7 @@ public class SignatureGenerationToolOptions {
 	private int threads = 8;
 	
 	@Option(name="-m", usage="Method to use (simple or partition)", required=false, aliases="--method")
-	private String method = "simple";
+	private GenerationMethod method = GenerationMethod.SIMPLE;
 	
 	@Option(name="-q", usage="Queue size (default: 100 per thread)", required=false, aliases="--queue-size")
 	private int queueSize = 0;
@@ -106,7 +111,7 @@ public class SignatureGenerationToolOptions {
 		return threads;
 	}
 	
-	public String getMethod() {
+	public GenerationMethod getMethod() {
 		return method;
 	}
 	

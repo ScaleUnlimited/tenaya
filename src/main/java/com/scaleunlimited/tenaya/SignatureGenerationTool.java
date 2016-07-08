@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 
+import com.scaleunlimited.tenaya.SignatureGenerationToolOptions.GenerationMethod;
 import com.scaleunlimited.tenaya.data.Signature;
 import com.scaleunlimited.tenaya.metadata.ExperimentMetadata;
 import com.scaleunlimited.tenaya.nio.*;
@@ -41,13 +42,13 @@ public class SignatureGenerationTool {
 			printUsageAndExit(cmdParser);
 		}
 		try {
-			String method = options.getMethod().toLowerCase();
-			if (method.equals("partition")) {
-				generateSignaturesPartitioned(options);
-			} else if (method.equals("simple")) {
+			GenerationMethod method = options.getMethod();
+			switch (method) {
+			case SIMPLE:
 				generateSignatures(options);
-			} else {
-				throw new IllegalArgumentException("Unknown method type: " + method);
+				break;
+			case PARTITION:
+				generateSignaturesPartitioned(options);
 			}
 		} catch (Throwable t) {
 			System.err.println("Tool failed: " + t.getMessage());
