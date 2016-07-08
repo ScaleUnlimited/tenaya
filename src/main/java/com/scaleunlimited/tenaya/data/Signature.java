@@ -47,21 +47,18 @@ public class Signature {
 					return;
 				}
 			}
-			data[count] = hash;
-			if (count == (size - 1)) {
+			data[count++] = hash;
+			if (count == size) {
 				Arrays.sort(data);
 			}
 		} else if (data[size-1] > hash) {
 			int index = Arrays.binarySearch(data, hash);
 			if (index < 0) {
 				int insertion = -(index + 1);
-				for (int i = (size - 1); i > insertion; i--) {
-					data[i] = data[i - 1];
-				}
+				System.arraycopy(data, insertion, data, insertion + 1, size - insertion - 1);
 				data[insertion] = hash;
 			}
 		}
-		count++;
 	}
 	
 	public int getSize() {
